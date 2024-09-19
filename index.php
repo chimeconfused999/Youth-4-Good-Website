@@ -1,10 +1,4 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youth4Good Overview</title>
 
 
 <!DOCTYPE html>
@@ -17,25 +11,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="chatgpt.js"></script>
+    <script src="googlesignin.js"></script>
+    
+    </head>
 <body>
-    <div id = "chaticon2" class = "chatbuttonicon"><img src = "chat.png" id = "chaticonimg" alt = "chat icon" width = 50 height = 50></div>
-    <div id="mydiv" class = "mydiv">
-      <!-- Include a header DIV with the same name as the draggable DIV, followed by "header" -->
-      <div id="mydivheader"><a id = "chatTitle">HI</a> (Drag to Move)</div>
-        <div class = "Container" id = "chatContainer"></div>
-          <div id = "chat"><form id = "chatform" onsubmit="return false">
-          <input type="text" id="chatbox" name="name" placeholder ="Enter your message:">
-          </form>
-        <button id = "chatbut2" onclick = "switchtogeneral()">Switch To General</button></div>
-    </div>
+
     <div id="siteheader">
         <div id="Logoname" >YOUTH4GOOD</div>
         <div id = "siteheader-content">
-            <span id = "overview" onclick="transitionToPage('index.php')" class = "currentpage">Overview</span>
+            <span id = "overview" onclick="transitionToPage('index.html')" class = "currentpage">Overview</span>
         </div>
     </div>
-    
+
 
     <div id = "TITLE">
         <h1>Youth 4 Good</h1>
@@ -46,69 +35,44 @@
         </div>
     </div>
 
-    
-    
     <div id = "contentcalendar">
-       
-        
+        <button id = "createeventbutton" class = "adminonly" onclick="createEvent1()" class="dropbtn">Create Event</button>
+        <div id="myDropdown" class="dropdown-content">
+          <span id = "crev">CREATE AN EVENT</span>
+          <span> <div class="event-form">
+              <input type="text" id="eventTitle" placeholder="Event Title" />
+              <input type="date" id="eventDate" />
+          </div></span>
+          <span><div class="event-form">
+                <input type="text" id="eventLocation" placeholder="Event Location" />
+                 <input type="time" id="eventStart"/>-<input type = "time" id="eventEnd" >
+            </div></span>
+          <span id = "lastform"><div  class="event-form">
+                  <input type="text" id="eventDescription" placeholder="Event Description" />
+              <button id = "addev" onclick="addEvent()">Add Event</button>
+              </div></span>
+
+        </div>
         <div class="calendar-container">
             <div class="calendar-header">
-                <div class="header-left">
-                    <h2>Event Calendar</h2>
-                    <button id="createeventbutton" class="dropbtn adminonly" onclick="createEvent1()">Create Event</button>
-                    <div id="myDropdown" class="dropdown-content">
-                      <span id = "crev">CREATE AN EVENT</span>
-                      <span> <div class="event-form">
-                          <input type="text" id="eventTitle" placeholder="Event Title" />
-                          <input type="date" id="eventDate" />
-                      </div></span>
-                      <span><div class="event-form">
-                            <input type="text" id="eventLocation" placeholder="Event Location" />
-                             <input type="number" id="eventDuration" placeholder="Event Event Duration" />
-                        </div></span>
-                      <span id = "lastform"><div  class="event-form">
-                              <input type="text" id="eventDescription" placeholder="Event Description" />
-                          <button id = "addev" onclick="addEvent()">Add Event</button>
-                          </div></span>
-
-                    </div>
-                </div>
-                <div class="header-right">
-                    <h3 id="month">September 2024</h3>
-                    <span>
-                        <button id="prevMonth" onclick="changeMonth(-1)">&lt;</button>
-                        <button id="nextMonth" onclick="changeMonth(1)">&gt;</button>
-                    </span>
-                </div>
+                <h2>Event Calendar</h2>
+                <h3 id="month"></h3>
+                <span>
+                    <button id="prevMonth" onclick="changeMonth(-1)"> &lt; </button>
+                    <button id="nextMonth" onclick="changeMonth(1)"> &gt; </button>
+                    <button onclick="callGoogleSignIn()" value="Google Sign In" id="googleSignIn">Google</button>
+                    <button onclick="logOut()" value="Google Sign Out" id="googleSignOut">Log Out</button>
+                </span>
             </div>
             <div class="calendar-grid" id="calendarGrid">
             </div>
         </div>
+    </div>
 
-    </div>
-    <div id = "s2s" class = "sidetoside">
-        <img src = "wechatimg206.jpg" id = "wechatimg" alt = "wechatimg">
-        <div id = "TITLE2">
-            <h2>About Us</h2>
-            <!-- <button id="notificationBtn" onclick="Notifaction()"><img src = "bell.png" alt = "notification" width = "35px" height = "35px"></button> -->
-            <div class="line-2"></div>
-            <div id = "titledescription">
-                <h2>Our mission is to develop leadership skills and good citizenship practices in youngsters through community service.</h2>
-            </div>
-        </div>
-    </div>
-    <div id = "TITLE3">
-        <h2>Leadership 2024-2025</h2>
-        <!-- <button id="notificationBtn" onclick="Notifaction()"><img src = "bell.png" alt = "notification" width = "35px" height = "35px"></button> -->
-        <div class="line-1"></div>
-        <div id = "titledescription">
-            <h3>Meet our dedicated team at Youth4Good, empowering the next generation of students</h3>
-        </div>
-    </div>
     <div id="eventDetailsPanel2" class="event-details-panel2">
        <h1 class = "joined">Joined: </h1>
         <h2 id = "joinedppl"></h2>
-       
+
 
 
     </div>
@@ -147,21 +111,79 @@
         <l>Members: </l><l id = "mcount">0</l><br>
         <button class = "eventDetPanBTN" id = "changechat" onclick = "changetochat()">Change Chat</button>
         <button class = "eventDetPanBTN" id = "joinbutton" onclick = "joinEvent()">Join</button>
-        <div class="button-container">
-            <button class="adminonly" id="closeevent" onclick="sidebar()">Info</button>
-            <button id="editevent" class="adminonly" onclick="editevent()">Edit</button>
-        </div>
+        <button class = "adminonly" id = "closeevent" onclick="sidebar()">Info</button>
+
+        <button id = "editevent" class = "adminonly" onclick="editevent()">Edit</button>
     </div>
+
+    <div class = "person">
+          <span>
+              <div class = "Container" id = "chatContainer"></div>
+              <div id = "chat"><form id = "chatform" onsubmit="return false">
+              <input type="text" id="chatbox" name="name" placeholder ="Enter your message:">
+              </form></div>
+              <div id = "generalbut"><button id = "chatbut2" onclick = "switchtogeneral()">Switch To General</button></div>
+              <div id= "chatbutcont"><button id = "chatbut">Send</button></div>
+              <script type = "module">
+                  import { chatbotMessage } from './chatgpt.js';
+
+                  // Example usage
+                  
+                  async function sendMessage() {
+                    
+                    const message = document.getElementById('chatbox').value.trim();
+                      if(message.includes("@gpt")){
+                    const curhat = localStorage.getItem("curchat");
+                    const curchat = curhat.replace("Chat","").trim()
+                    
+                    const response = await chatbotMessage(message, curchat);
+                      var xhr = new XMLHttpRequest();
+                      xhr.open("POST", "chat.php", true);
+                      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                      // Disable the input field before sending the request
+                      chatbox.disabled = true;
+
+                      xhr.onreadystatechange = function() {
+                          if (xhr.readyState === 4 && xhr.status === 200) {
+                              // Re-enable the input field after the response is received
+                              chatbox.disabled = false;
+
+                          }
+                      };
+
+                      const curChat = encodeURIComponent(curchat.trim());
+                      const name = encodeURIComponent("Youth4GoodBot");
+                      const chatboxValue = encodeURIComponent(response);
+
+                      // Create the data string with newlines encoded as %0A
+                      const data = `username=${curChat}%0A${name} %0A${chatboxValue}`;
+                      xhr.send(data);
+
+                      // Clear chatbox after sending
+                      chatbox.value = "";
+                      displaychat();
+                  }
+                  }
+                  window.addEventListener("keypress", function(event) {
+                    // If the user presses the "Enter" key on the keyboard
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                        
+                      sendMessage()
+                    }
+                  });
     
-    
-    <footer>
-        <p>Make your own website
-        <br><a href = "https://youtu.be/chOvyuyZe9M">https://youtu.be/chOvyuyZe9M</a></p>
-        <br>
-        <p>Do not email me<br>
-        <a href="mailto:maxhzhang119@gmail.com">maxhzhang119@gmail.com</a></p>
-      </footer>
-    <script src="script.js"></script>
+                
+
+                  
+
+              </script>
+          </span>
+          <span><img id = "titlepageimg" src = "Youth4g.png"></span>
+
+    </div>
+    <script     src="script.js"></script>
     
 </body>
 </html>

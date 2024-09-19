@@ -37,7 +37,7 @@ if ($title) {
     $myfile = fopen($title . ".txt", "w+");
     if ($myfile) {
         // // Write data to the file (you can adjust what you write here)
-        fwrite($myfile, $name . "\n");  
+        fwrite($myfile, "owner" . "\n" . "not arrived" . "\n" . $name . "\n");  
         
         
         // // Close the file

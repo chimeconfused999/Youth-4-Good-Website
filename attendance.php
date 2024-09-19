@@ -31,7 +31,7 @@ if ($title && $name) {
             echo json_encode(["status" => "error", "message" => "Name already exists."]);
         } else {
             // Append the new data to the file since the name doesn't exist
-            fwrite($myfile, $name . "\n");
+            fwrite($myfile, "member" . "\n" . "not arrived" . "\n" . $name . "\n");
             fclose($myfile);
 
             // Respond with success

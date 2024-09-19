@@ -17,10 +17,10 @@ $eventDate = isset($input['eventDate']) ? trim($input['eventDate']) : null;
 $eventDuration = isset($input['eventDuration']) ? trim($input['eventDuration']) : null;
 $eventPlace = isset($input['eventPlace']) ? trim($input['eventPlace']) : null;
 $eventDescription = isset($input['eventDescription']) ? trim($input['eventDescription']) : null;
-
+var_dump($input)
 // Validate input to ensure required fields are present
 
-// Read and decode the JSON filea
+// Read and decode the JSON file
 if (!file_exists($filePath)) {
     echo json_encode([
         "status" => "error", 
@@ -91,15 +91,23 @@ if ($data === null) {
 $eventFound = false;
 
 // Iterate through the JSON array and find the event by its title
-
-
 foreach ($data as $key => $event) {
-    
-
-    
     if (isset($event['title']) && $event['title'] == $eventTitle) {
-        // If event is found, update its details or delete if conditions don't match
-       
+        // Check if a .txt file with the old event title exists
+        $oldFileName = strtolower(trim($eventTitle)) . '.txt';
+        $newFileName = strtolower(trim($newEventTitle)) . '.txt';
+
+        if (file_exists($oldFileName)) {
+            // Rename the old file to the new event title
+            if (rename($oldFileName, $newFileName)) {
+                echo "File renamed successfully from $oldFileName to $newFileName\n";
+            } else {
+                echo "Error renaming file $oldFileName to $newFileName\n";
+            }
+        } else {
+            echo "File $oldFileName does not exist, so no renaming occurred.\n";
+        }
+
         // Update the event details
         $data[$key] = [
             'title' => $newEventTitle,
@@ -109,7 +117,7 @@ foreach ($data as $key => $event) {
             'description' => $eventDescription,
             'name' => $event['name'] // Preserve the 'name' field
         ];
-         
+
         $eventFound = true;
         break;
     }
