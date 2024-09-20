@@ -12,10 +12,14 @@ let currentYear;
 let eventdet = true;
 let editbar = true;
 let infobar = true;
+let chatbar = true;
+var elmnt = document.getElementById("mydiv");
+var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 // main.js
 
 
 // Call the function and handle its response
+localStorage.setItem("name","kaizhang")
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -129,7 +133,8 @@ function addExistingEvents(){
       }
       return response.json(); // Parse the JSON data
   })
-  .then(data => {       
+  .then(data => {     
+    
     for (i = 0; i < data.length; i++) {
       addEvent2(data[i].title, data[i].data, data[i].place, data[i].duration, data[i].description); 
 
@@ -142,6 +147,7 @@ function addExistingEvents(){
 
 function checkName(){
   if(localStorage.getItem("name") == null){
+    localStorage.setItem("serviceminutes",0)
     var signup = prompt("Please enter your name");
 
     fetch('members.json')
@@ -227,7 +233,7 @@ function calendar(){
        .then(data => {
          for (i=0; i<data.length; i++){
            l=data[i].data.split("-");
-           if(l[0]<currentYear || l[0] == currentYear && l[1]<currentMonth2 || l[0] == currentYear && l[1] == currentMonth2 && l[2]<currentDay ){
+           if(l[0]<currentYear || l[0] == currentYear && l[1]<currentMonth2 || l[0] == currentYear && l[1] < currentMonth2 ){
              //funny thing
              var filename = encodeURIComponent(data[i].title) + ".txt";
 
@@ -328,7 +334,8 @@ function avaliablebutton(dayDiv, currentMonthIndex, day,year){
 function switchtogeneral(){
   localStorage.setItem("curchat","general")
   displaychat()
-  document.getElementById("generalbut").style.display = "none";
+  document.getElementById("chatTitle").innerHTML = localStorage.getItem("curchat");
+  document.getElementById("chatbut2").style.display = "none";
 }
 //json testing
 function send(){
@@ -506,12 +513,12 @@ document.body.addEventListener('click', function (event) {
       }
     }
   }
-  if (!event.target.closest('.event-details-panel') && document.getElementById("eventDetailsPanel").classList.contains("show-panel") && eventdet == false && infobar == true && editbar == true && !event.target.closest('.event')){
+  if (!event.target.closest('.event-details-panel') && document.getElementById("eventDetailsPanel").classList.contains("show-panel") && eventdet == false && infobar == true && editbar == true && !event.target.closest('.event') && chatbar == true){
 
     eventdet = true;
     closeEventDetails();
   }
-  if (!event.target.closest('.event-details-panel2') && infobar == false){
+  if (!event.target.closest('.event-details-panel2') && infobar == false && !event.target.closest('.joinedpple')){
     infobar = true;
     closeEventDetails2();
   }
@@ -519,119 +526,114 @@ document.body.addEventListener('click', function (event) {
     editbar = true;
     closeeditdet();
   }
+  if (!event.target.closest('.mydiv') && !event.target.closest('.chatbuttonicon') && chatbar == false){
+    chatbar = true;
+    closechatbar();
+  }
 
 });
 
-function addEvent2( title, date , place, duration, description) {
+function addEvent2(title, eventDate, place, duration, description) {
+  const now = new Date();
+
+  // Format the current date and time
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles', // You might want to replace 'UTC' with your desired timezone.
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
   const formatterTime = new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false, // Use 24-hour format
+    hour12: false, // 24-hour format
   });
+
+  const eformattedDate = formatter.format(now);
+  const formattedTime = formatterTime.format(now);
+
+  // Format date to YYYY-MM-DD
+  const [emonth, eday, eyear] = eformattedDate.split('/');
+  const formattedDate = `${eyear}-${emonth}-${eday}`;
+
   fetch('data.json')
-  .then(response => {
-      if (!response.ok) {
-          throw new Error('Network response was not ok');
-      }
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
       return response.json(); // Parse the JSON data
-  })
-  .then(data => {       
+    })
+    .then(data => {       
+      for (let event of data) {
+        if (event.title === title) {
+          // Extract start and end hours and minutes
+          const [eventStartHours, eventStartMinutes] = event.duration.slice(0, 5).split(':').map(Number);
+          const [eventEndHours, eventEndMinutes] = event.duration.slice(6).split(':').map(Number);
 
-    for (let i = 0; i < data.length; i++) {
-      if(data[i].title == title){
-        const event = data[i];
+          const [currentHours, currentMinutes] = formattedTime.split(':').map(Number);
 
-        // Extract event hours and minutes, converting to numbers for comparison
-        const eventHours = parseInt(event.duration.slice(0, 2), 10);
-        const eventMinutes = parseInt(event.duration.slice(3, 5), 10);
-        const eventEndHours = parseInt(event.duration.slice(6, 8))
-        const eventEndMinutes = parseInt(event.duration.slice(9, 11), 10)
+          // Ensure the event date matches today’s date
+          const isSameDay = event.data === formattedDate;
 
-        // Extract current hours and minutes, converting to numbers for comparison
-        const currentHours = parseInt(formattedTime.slice(0, 2), 10);
-        const currentMinutes = parseInt(formattedTime.slice(3, 5), 10);
-        //alert(eventMinutes)
+          // Check if the event has ended
+          const isEventEnded = (
+            eventEndHours < currentHours || 
+            (eventEndHours === currentHours && eventEndMinutes <= currentMinutes)
+          );
 
-        // Ensure the event date is the same as today's date
-        const isSameDay = event.data === formattedDate;
-
-        // Check if the event has started by comparing hours and minutes
-        // If it's the same hour, check minutes
-        const isEventEnded = (
-          (eventEndHours < currentHours) || // if event ended hour ago
-            (eventEndHours === currentHours && eventEndMinutes <= currentMinutes) // If it's the same hour, check minutes
-        )
-        //alert(currentHours, currentMinutes, eventEndMinutes, eventEndHours)
-        // If both conditions are met, update the button text
-        if(isEventEnded){
-          calculatetotal(event.title,eventEndHours, eventEndMinutes)
-          //calculate time and add to leadeboard/member.json
+          // If the event has ended, calculate total
+          if (isEventEnded) {
+            calculatetotal(event.title, eventEndHours, eventEndMinutes);
+          }
         }
       }
-    }
-
-
-
-  })
-  .catch(error => {
-      console.error('There was a problem with fetching the text file:', error);
-  });
-
-  
-
-  // Extract current hours and minutes, converting to numbers for comparison
-  
-  const year = parseInt(eventDate.split('-')[0],10);
-  var month = parseInt(eventDate.split('-')[1],10);
-  var day = parseInt(eventDate.split('-')[2],10);
-  let red = false;
-   // Initialize the `red` variable
-
-  // Check if the year is before the current year
-  if (year < currentYear) {
-      red = true;
-  }
-  // If the year is the same, check the month
-  else if (year === currentYear && month < currentMonth2) {
-      red = true;
-  }
-  // If the year and month are the same, check the day
-  else if (year === currentYear && month === currentMonth2 && day < currentDay) {
-      red = true;
-  }
-
-
-  const eventplace = place;
-  const eventDuration = duration +" hour(s)";
-  const eventDescription = description;
-  const payPiv = document.querySelector(`.calendar-day[data-date='${eventDate}']`);
-
-
-  if (eventTitle.trim() === "" || eventDate === "") {
-    console.log("Please enter both the event title and date.");
-      return;
-  }
-  if (payPiv) {
-      const eventElement = document.createElement('div');
-      if (red){
-
-        eventElement.style.backgroundColor = "orangered";
-        eventElement.style.color = "black";
-      }
-      eventElement.classList.add('event');
-      eventElement.textContent = eventTitle;
-
-    eventElement.addEventListener('click', function () {
-
-        showEventDetails(eventTitle || "", eventDate || "", eventplace || "", eventDuration || "", eventDescription || "");
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
     });
 
-      payPiv.appendChild(eventElement);
-  } else {
-      console.log("Invalid date selected.");
+  // Parse the input eventDate and check if it's in the past
+  const [year, month, day] = eventDate.split('-').map(Number);
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // getMonth() is 0-indexed
+  const currentDay = now.getDate();
+
+  let red = false;
+
+  // Check if the event is in the past
+  if (year < currentYear || 
+      (year === currentYear && month < currentMonth) || 
+      (year === currentYear && month === currentMonth && day < currentDay)) {
+    red = true;
   }
 
+  // If the title or date is empty, exit
+  if (!title.trim() || !eventDate) {
+    console.log("Please enter both the event title and date.");
+    return;
+  }
+
+  const payPiv = document.querySelector(`.calendar-day[data-date='${eventDate}']`);
+
+  if (payPiv) {
+    const eventElement = document.createElement('div');
+    eventElement.classList.add('event');
+    eventElement.textContent = title;
+
+    // Apply red background if event is in the past
+    if (red) {
+      eventElement.style.backgroundColor = "orangered";
+      eventElement.style.color = "black";
+    }
+
+    eventElement.addEventListener('click', function () {
+      showEventDetails(title, eventDate, place, duration, description);
+    });
+
+    payPiv.appendChild(eventElement);
+  } else {
+    console.log("Invalid date selected.");
+  }
 }
 
 function addEvent() {
@@ -791,11 +793,8 @@ function showEventDetails(title, date, place, duration, description) {
         if (isSameDay && isEventStarted && !isEventEnded) {
             document.getElementById("joinbutton").textContent = "ATTENDANCE STARTED";
             document.getElementById("joinbutton").style.backgroundColor = "green";
-            break; // Exit loop as soon as attendance starts for any event
-        } if(isEventEnded){
-          alert("ended")
-          //calculate time and add to leadeboard/member.json
-        }
+            break; // Exit loop as soon as attendance starts for any even
+        } 
       }
     }
 
@@ -825,9 +824,10 @@ function showEventDetails(title, date, place, duration, description) {
       textLines = []
         joinButton.style.display = 'block';
       const title = document.getElementById("eventTitleDisplay").textContent.trim();
-      const safeTitle = encodeURIComponent(title);  // Sanitizing the title
+      const safeTitle = encodeURIComponent(title)+".txt";  // Sanitizing the title
+      alert(safeTitle)
 
-      fetch(safeTitle + ".txt")
+      fetch(safeTitle)
 
       .then(response => {
         // Check if the response is successful
@@ -907,7 +907,8 @@ function sidebar(){
     document.getElementById("joinedppl").innerHTML = '';
     let eventtitle = document.getElementById("eventTitleDisplay").textContent;
     var textLines = [];
-    fetch(encodeURIComponent(eventtitle)+'.txt')
+    safeTitle = encodeURIComponent(eventtitle);
+    fetch(safeTitle+'.txt')
       .then(response => {
           if (!response.ok) {
               throw new Error('Network response was not ok');
@@ -1013,11 +1014,16 @@ function closeEventDetails2() {
 
 function changetochat(){
   localStorage.setItem("curchat", document.getElementById('changechat').innerHTML)
-  document.getElementById("generalbut").style.display = "block";
+  eventdet = true;
+  closeEventDetails();
+  document.getElementById("chatbut2").style.display = "block";
+  document.getElementById("chatTitle").innerHTML = localStorage.getItem("curchat");
+  document.getElementById("mydiv").style.display = "block";
+  document.getElementById("mydiv").classList.add("myDi");
+
+  setTimeout(function(){document.getElementById("mydiv").classList.remove("myDi");document.getElementById("mydiv").style.opacity = 1;chatbar = false;},500)
   displaychat()
 }
-
-
 
 
 
@@ -1131,11 +1137,11 @@ $('#eventForm').on('submit', function(e) {
     var formData = {
         eventTitle: document.getElementById("eventTitleDisplay").innerHTML,
 
-        newEventTitle: $('#eventTitle').val(),
-        eventDate: $('#eventDate').val(),
-        eventDuration: $('#eventDuration').val(),
-        eventPlace: $('#eventPlace').val(),
-        eventDescription: $('#eventDescription').val()
+        newEventTitle: $('#1eventTitle').val(),
+        eventDate: $('#1eventDate').val(),
+        eventDuration: $('#1eventStart').val() + "-" + $("#1eventEnd").val(),       
+        eventPlace: $('#1eventPlace').val(),
+        eventDescription: $('1#eventDescription').val()
     };
 
   $.ajax({
@@ -1150,7 +1156,7 @@ $('#eventForm').on('submit', function(e) {
           alert('An error occurred: ' + error);
       }
   });
-  location.reload()
+  
 
 });
 window.addEventListener('scroll', function() {
@@ -1163,8 +1169,10 @@ window.addEventListener('scroll', function() {
 });
 
 function checkif(){
-  if($('#eventTitle').val() != ""||
-$('#eventDate').val() != ""|| $('#eventDuration').val() != ""||$('#eventPlace').val()!=""|| $('#eventDescription').val()!=""){
+
+  
+  if($('#1eventTitle').val() != ""||
+$('#1eventDate').val() != ""|| $('#1eventStart').val() != ""||$('#1eventEnd').val() != "" ||$('#1eventPlace').val()!=""|| $('#1eventDescription').val()!=""){
     document.getElementById("submit-btn123").textContent = "Update Event";
   } else{
     document.getElementById("submit-btn123").textContent = "Delete Event";
@@ -1194,28 +1202,216 @@ function createTrail(x, y) {
       trail.remove();
   }, 800);  // Matches the animation duration
 }
-function calculatetotale(file,endhr,endmin) {
-  textlines = []
-  fetch(encodeURIComponent(file)+'.txt')
+function calculatetotal(file, endhr, endmin) {
+  const safetitle = encodeURIComponent(file) + ".txt";
+
+  fetch(safetitle)
     .then(response => {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      return response.json(); // Parse the JSON data
+      return response.text(); // Use .text() for plain text files
     })
-    .then(data => {    
-      textLines = data.split('\n')
-      for(i=2;i<textLines.length;i+=3){
-        start = textLines[i-1]
-        starthr = parseInt(start.slice(0,2))
-        startmin = parseInt(start.slice(3,5))
-        localStorage.setItem("serviceminutes",60*(endhr-starthr)-endmin-startmin)
-      //track service hours here
-        
+    .then(data => {
+      const textLines = data.split('\n'); // Split the text into lines
+
+      for (let i = 2; i < textLines.length; i += 3) {
+
+        if (textLines[i] === localStorage.getItem("name")) {
+          const start = textLines[i - 1];
+          const starthr = parseInt(start.slice(0, 2), 10);
+          const startmin = parseInt(start.slice(3, 5), 10);
+
+          // Fix the condition check
+          if (start !== "claimed") {
+            // Get the current service minutes from localStorage, default to 0 if not set
+            const currentMinutes = parseInt(localStorage.getItem("serviceminutes") || "0", 10);
+
+            // Update service minutes
+            localStorage.setItem("serviceminutes", currentMinutes + 60 * (endhr - starthr) + (endmin - startmin));
+
+            leaderboardupdate();
+
+            const data = {
+              buttonId: localStorage.getItem("name"),
+              buttonkid: "claimed",
+              filePat: file
+            };
+
+            // AJAX request to update the .txt file
+            $.ajax({
+              type: 'POST',
+              url: 'mark.php', // PHP file to process the request
+              data: data, // Send the data object
+              success: function(response) {
+                // Display success message or error from the PHP response
+                $('#responseMessage').text(response);
+              },
+              error: function(xhr, status, error) {
+                // Display error if the request fails
+                $('#responseMessage').text('An error occurred: ' + error);
+              }
+            });
+          }
+
+          // Track service hours here
+        }
       }
     })
     .catch(error => {
-      console.error('There was a problem with fetching the text file:',
-                    error);
-    });  
+      console.error('There was a problem with fetching the text file:', error);
+    });
+}
+
+
+const originalSend = XMLHttpRequest.prototype.send;
+
+XMLHttpRequest.prototype.send = function() {
+
+
+  if ((new Error()).stack.includes('<anonymous>:1')) {
+      console.log("XMLHttpRequest send called from console, returning false.");
+      return false;
+  }
+  return originalSend.apply(this, arguments);
+};
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value) {
+
+    if ((new Error()).stack.includes('<anonymous>:1')) {
+        console.log("Something was modified via console, returning false.");
+      return new Promise((resolve, reject) => {
+
+        resolve(); 
+      });
+    }
+    originalSetItem.call(localStorage, key, value);
+};
+
+const originalAjax = $.ajax;
+
+// Override the $.ajax method
+$.ajax = function() {
+  // Create an Error object to capture the stack trace
+  const stackTrace = (new Error()).stack;
+
+  // Log the stack trace for debugging purposes
+  console.log("Stack trace from $.ajax:", stackTrace);
+
+  // Check if the stack trace contains specific information
+  if (stackTrace.includes('<anonymous>:1')) {
+    console.log("$.ajax called from console, modifying behavior.");
+
+    return new Promise((resolve, reject) => {
+
+      resolve(); 
+    });
+  }
+
+  return originalAjax.apply(this, arguments);
+};
+function leaderboardupdate() {
+  const name = localStorage.getItem("name");
+  const serviceMinutes = localStorage.getItem("serviceminutes");
+
+  // Add a log to check if the data is correct
+  console.log("Sending Data:", { name, serviceMinutes });
+
+  if (!name || !serviceMinutes) {
+    console.error("Invalid name or service minutes");
+    return;
+  }
+
+  const data = {
+    username: name, // Send username as a separate field
+    serviceminutes: parseInt(serviceMinutes, 10) // Send serviceminutes as a separate field
+  };
+
+  $.ajax({
+    type: "POST",
+    url: "leaderboard.php",
+    contentType: "application/json",
+    data: JSON.stringify(data),
+    success: function(response) {
+      console.log("Data sent successfully:", response);
+    },
+    error: function(error) {
+      console.error("Error sending data:", error);
+    }
+  });
+}
+
+leaderboardupdate()
+
+
+
+dragElement(document.getElementById("mydiv"));
+
+function dragElement(elmnt) {
+  if (document.getElementById(elmnt.id + "header")) {
+    // if present, the header is where you move the DIV from:
+    document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+  } else {
+    // otherwise, move the DIV from anywhere inside the DIV:
+    elmnt.onmousedown = dragMouseDown;
+  }
+
+function dragMouseDown(e) {
+  e = e || window.event;
+  e.preventDefault();
+  // Get the initial mouse cursor position
+  pos3 = e.clientX;
+  pos4 = e.clientY;
+  // Get the initial element position
+  pos1 = elmnt.offsetLeft;
+  pos2 = elmnt.offsetTop;
+  document.onmouseup = closeDragElement;
+  // Call a function whenever the cursor moves
+  document.onmousemove = elementDrag;
+}
+
+function elementDrag(e) {
+  e = e || window.event;
+  e.preventDefault();
+  // Calculate the new cursor position
+  var deltaX = e.clientX - pos3;
+  var deltaY = e.clientY - pos4;
+  // Set the element's new position
+  elmnt.style.left = (pos1 + deltaX) + "px";
+  elmnt.style.top = (pos2 + deltaY-80) + "px";
+}
+
+function closeDragElement() {
+  // Stop moving when mouse button is released
+  document.onmouseup = null;
+  document.onmousemove = null;
+}
+}
+
+document.getElementById("chaticon2").onclick = function() {
+
+  if (document.getElementById("mydiv").style.display == "block"){
+    document.getElementById("mydiv").classList.add("cDi");
+    setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";    chatbar = true;},500)
+  }
+  else{
+
+    if (localStorage.getItem("curchat") == "general" && document.getElementById("chatbut2")) {
+      document.getElementById("chatbut2").style.display = "none";
+    }
+    else if (document.getElementById("chatbut2")){
+      document.getElementById("chatbut2").style.display = "block";
+    }
+    document.getElementById("mydiv").style.display = "block";
+    document.getElementById("chatTitle").innerHTML = localStorage.getItem("curchat");
+    document.getElementById("mydiv").classList.add("myDi");
+    setTimeout(function(){document.getElementById("mydiv").classList.remove("myDi");document.getElementById("mydiv").style.opacity = 1; chatbar = false;},500)
+    displaychat()
+  }
+
+}
+
+function closechatbar(){
+  document.getElementById("mydiv").classList.add("cDi");
+  setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";     chatbar = true;},500)
 }

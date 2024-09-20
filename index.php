@@ -17,7 +17,109 @@
     
     </head>
 <body>
+    <div id = "chaticon2" class = "chatbuttonicon"><img src = "chat.png" id = "chaticonimg" alt = "chat icon" width = 50 height = 50></div>
+    <div id="mydiv" class = "mydiv">
+      <!-- Include a header DIV with the same name as the draggable DIV, followed by "header" -->
+      <div id="mydivheader"><a id = "chatTitle">HI</a> (Drag to Move)</div>
+        <div class = "Container" id = "chatContainer"></div>
+          <div id = "chat"><form id = "chatform" onsubmit="return false">
+          <input type="text" id="chatbox" name="name" placeholder ="Enter your message:">
+          </form>
+        <button id = "chatbut2" onclick = "switchtogeneral()">Switch To General</button></div>
+        <script type = "module">
+              import { chatbotMessage } from './chatgpt.js';
 
+              // Example usage
+
+              async function sendMessage() {
+                 
+                  const message = document.getElementById('chatbox').value.trim();
+                  
+                  if(message.includes("@gpt")){
+
+                  var chatbox = document.getElementById("chatbox");
+
+                  var xhr = new XMLHttpRequest();
+                  xhr.open("POST", "chat.php", true);
+                  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                  // Disable the input field before sending the request
+                  chatbox.disabled = true;
+
+                  xhr.onreadystatechange = function() {
+                      if (xhr.readyState === 4 && xhr.status === 200) {
+                          // Re-enable the input field after the response is received
+                          chatbox.disabled = false;
+
+                      }
+                  };
+
+                  var curChat = encodeURIComponent(localStorage.getItem("curchat"));
+                  var name = encodeURIComponent(localStorage.getItem("name"));
+                  var chatboxValue = encodeURIComponent(chatbox.value);
+
+                  // Create the data string with newlines encoded as %0A
+                  var data = `username=${curChat}%0A${name} %0A${chatboxValue}`;
+                  xhr.send(data);
+
+              
+                  // Clear chatbox after sending
+                  displaychat();
+                  document.getElementById("chatContainer").scrollTop = document.getElementById("chatContainer").scrollHeight;
+
+                
+                  
+                var curChat3 = localStorage.getItem("curchat");
+                 curChat3 = curChat3.replace("Chat","").trim()
+                alert(curChat3 + " " + message);
+                const response = await chatbotMessage(message, curChat3);
+                  var xhr = new XMLHttpRequest();
+                  xhr.open("POST", "chat.php", true);
+                  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                  // Disable the input field before sending the request
+                  chatbox.disabled = true;
+
+                  xhr.onreadystatechange = function() {
+                      if (xhr.readyState === 4 && xhr.status === 200) {
+                          // Re-enable the input field after the response is received
+                          chatbox.disabled = false;
+
+                      }
+                  };
+
+                  var curChat2 = encodeURIComponent(localStorage.getItem("curchat"));
+                      alert(curChat2);
+                      
+                      
+                  name = encodeURIComponent("Youth4GoodBot");
+                  chatboxValue = encodeURIComponent(response);
+
+                  // Create the data string with newlines encoded as %0A
+                  data = `username=${curChat2}%0A${name} %0A${chatboxValue}` + " To Call me, type @gpt and the message you want to ask me.";
+                  xhr.send(data);
+
+                  // Cl2ear chatbox after sending
+                  chatbox.value = "";
+                  displaychat();
+                      document.getElementById("chatContainer").scrollTop = document.getElementById("chatContainer").scrollHeight;
+              }
+              }
+              window.addEventListener("keypress", function(event) {
+                // If the user presses the "Enter" key on the keyboard
+                if (event.key === "Enter") {
+                  event.preventDefault();
+
+                  sendMessage()
+                }
+              });
+
+
+
+
+
+          </script>
+    </div>
     <div id="siteheader">
         <div id="Logoname" >YOUTH4GOOD</div>
         <div id = "siteheader-content">
@@ -36,26 +138,27 @@
     </div>
 
     <div id = "contentcalendar">
-        <button id = "createeventbutton" class = "adminonly" onclick="createEvent1()" class="dropbtn">Create Event</button>
-        <div id="myDropdown" class="dropdown-content">
-          <span id = "crev">CREATE AN EVENT</span>
-          <span> <div class="event-form">
-              <input type="text" id="eventTitle" placeholder="Event Title" />
-              <input type="date" id="eventDate" />
-          </div></span>
-          <span><div class="event-form">
-                <input type="text" id="eventLocation" placeholder="Event Location" />
-                 <input type="time" id="eventStart"/>-<input type = "time" id="eventEnd" >
-            </div></span>
-          <span id = "lastform"><div  class="event-form">
-                  <input type="text" id="eventDescription" placeholder="Event Description" />
-              <button id = "addev" onclick="addEvent()">Add Event</button>
-              </div></span>
-
-        </div>
+        
         <div class="calendar-container">
             <div class="calendar-header">
                 <h2>Event Calendar</h2>
+                <button id="createeventbutton" class="dropbtn adminonly" onclick="createEvent1()">Create Event</button>
+                <div id="myDropdown" class="dropdown-content">
+                  <span id = "crev">CREATE AN EVENT</span>
+                  <span> <div class="event-form">
+                      <input type="text" id="eventTitle" placeholder="Event Title" />
+                      <input type="date" id="eventDate" />
+                  </div></span>
+                  <span><div class="event-form">
+                        <input type="text" id="eventLocation" placeholder="Event Location" />
+                         <input type="time" id="eventStart"/>-<input type = "time" id="eventEnd" >
+                    </div></span>
+                  <span id = "lastform"><div  class="event-form">
+                          <input type="text" id="eventDescription" placeholder="Event Description" />
+                      <button id = "addev" onclick="addEvent()">Add Event</button>
+                      </div></span>
+
+                </div>
                 <h3 id="month"></h3>
                 <span>
                     <button id="prevMonth" onclick="changeMonth(-1)"> &lt; </button>
@@ -78,25 +181,27 @@
     </div>
     <div id = "editDetails" class = "event-details-panel2">
         <form id="eventForm" oninput = "checkif()" onclick = "checkif()" >
-            <label for="eventTitle">Event Title:</label>
+            <label for="1eventTitle">Event Title:</label>
             <br>
-            <input class = "sidebarform"  type="text" id="eventTitle" name="eventTitle" ><br><br>
+            <input class = "sidebarform"  type="text" id="1eventTitle" name="1eventTitle" ><br><br>
 
-            <label for="eventDate">Event Date:</label>
+            <label for="1eventDate">Event Date:</label>
             <br>
-            <input class = "sidebarform"   type="date" id="eventDate" name="eventDate" ><br><br>
+            <input class = "sidebarform"   type="date" id="1eventDate" name="1eventDate" ><br><br>
 
-            <label for="eventDuration">Event Duration (hours):</label>
+            <label for="1eventStart">Event Duration (hours):</label>
             <br>
-            <input class = "sidebarform"  type="text" id="eventDuration" name="eventDuration" ><br><br>
+            
+            <input type="time" id="1eventStart"/>-<input type = "time" id="1eventEnd" >
+            <br>
 
-            <label for="eventPlace">Event Place:</label>
+            <label for="1eventPlace">Event Place:</label>
             <br>
-            <input class = "sidebarform"   type="text" id="eventPlace" name="eventPlace" ><br><br>
+            <input class = "sidebarform"   type="text" id="1eventPlace" name="1eventPlace" ><br><br>
 
-            <label for="eventDescription">Event Description:</label>
+            <label for="1eventDescription">Event Description:</label>
             <br>
-            <textarea class = "sidebarform"  id="eventDescription" name="eventDescription" ></textarea><br><br>
+            <textarea class = "sidebarform"  id="1eventDescription" name="1eventDescription" ></textarea><br><br>
 
             <button type="submit" id = "submit-btn123" class = "sidebarbtn">Delete Event</button>
         </form>
@@ -116,73 +221,33 @@
         <button id = "editevent" class = "adminonly" onclick="editevent()">Edit</button>
     </div>
 
-    <div class = "person">
-          <span>
-              <div class = "Container" id = "chatContainer"></div>
-              <div id = "chat"><form id = "chatform" onsubmit="return false">
-              <input type="text" id="chatbox" name="name" placeholder ="Enter your message:">
-              </form></div>
-              <div id = "generalbut"><button id = "chatbut2" onclick = "switchtogeneral()">Switch To General</button></div>
-              <div id= "chatbutcont"><button id = "chatbut">Send</button></div>
-              <script type = "module">
-                  import { chatbotMessage } from './chatgpt.js';
 
-                  // Example usage
-                  
-                  async function sendMessage() {
-                    
-                    const message = document.getElementById('chatbox').value.trim();
-                      if(message.includes("@gpt")){
-                    const curhat = localStorage.getItem("curchat");
-                    const curchat = curhat.replace("Chat","").trim()
-                    
-                    const response = await chatbotMessage(message, curchat);
-                      var xhr = new XMLHttpRequest();
-                      xhr.open("POST", "chat.php", true);
-                      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-                      // Disable the input field before sending the request
-                      chatbox.disabled = true;
-
-                      xhr.onreadystatechange = function() {
-                          if (xhr.readyState === 4 && xhr.status === 200) {
-                              // Re-enable the input field after the response is received
-                              chatbox.disabled = false;
-
-                          }
-                      };
-
-                      const curChat = encodeURIComponent(curchat.trim());
-                      const name = encodeURIComponent("Youth4GoodBot");
-                      const chatboxValue = encodeURIComponent(response);
-
-                      // Create the data string with newlines encoded as %0A
-                      const data = `username=${curChat}%0A${name} %0A${chatboxValue}`;
-                      xhr.send(data);
-
-                      // Clear chatbox after sending
-                      chatbox.value = "";
-                      displaychat();
-                  }
-                  }
-                  window.addEventListener("keypress", function(event) {
-                    // If the user presses the "Enter" key on the keyboard
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                        
-                      sendMessage()
-                    }
-                  });
-    
-                
-
-                  
-
-              </script>
-          </span>
-          <span><img id = "titlepageimg" src = "Youth4g.png"></span>
-
+    <div id = "s2s" class = "sidetoside">
+        <img src = "wechatimg206.jpg" id = "wechatimg" alt = "wechatimg">
+        <div id = "TITLE2">
+            <h2>About Us</h2>
+            <!-- <button id="notificationBtn" onclick="Notifaction()"><img src = "bell.png" alt = "notification" width = "35px" height = "35px"></button> -->
+            <div class="line-2"></div>
+            <div id = "titledescription">
+                <h2>Our mission is to develop leadership skills and good citizenship practices in youngsters through community service.</h2>
+            </div>
+        </div>
     </div>
+    <div id = "TITLE3">
+        <h2>Leadership 2024-2025</h2>
+        <!-- <button id="notificationBtn" onclick="Notifaction()"><img src = "bell.png" alt = "notification" width = "35px" height = "35px"></button> -->
+        <div class="line-1"></div>
+        <div id = "titledescription">
+            <h3>Meet our dedicated team at Youth4Good, empowering the next generation of students</h3>
+        </div>
+    </div>
+    <footer>
+        <p>Make your own website
+        <br><a href = "https://youtu.be/chOvyuyZe9M">https://youtu.be/chOvyuyZe9M</a></p>
+        <br>
+        <p>Do not email me<br>
+        <a href="mailto:maxhzhang119@gmail.com">maxhzhang119@gmail.com</a></p>
+      </footer>
     <script     src="script.js"></script>
     
 </body>
