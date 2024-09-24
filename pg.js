@@ -6,9 +6,9 @@ const { Client } = require("pg");
 // PostgreSQL Client Setup
 const client = new Client({
   user: "postgres",          // Your PostgreSQL username
-  host: "34.173.65.142",     // Your PostgreSQL host
+  host: process.env.DBIP,     // Your PostgreSQL host
   database: "userdata",      // Your PostgreSQL database name
-  password: "^Y9D.;5F1mG",   // Your PostgreSQL password
+  password: process.env.DBPASSWORD,   // Your PostgreSQL password
   port: 5432,                // PostgreSQL default port
 });
 
