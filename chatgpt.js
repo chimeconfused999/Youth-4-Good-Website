@@ -1,5 +1,5 @@
 async function chatbotMessage(message, curchat) {
-  const OPENAI_API_KEY = 'sk-proj-ZK4tyqDmucCekEhglAQyT3BlbkFJOHKQVM9BZCuOHrO4s361'; // Replace with your API key
+  const OPENAI_API_KEY = process.env.OPENAI; // Replace with your API key
 
   console.log("Starting chatbotMessage with message:", message, "and curchat:", curchat);
 
