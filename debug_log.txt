@@ -1,5 +1,5 @@
 Array
 (
-    [username] => kaizhang
-    [serviceminutes] => 2
+    [username] => kzhang2027@moreaucatholic.org
+    [serviceminutes] => 75
 )

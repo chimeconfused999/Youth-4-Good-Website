@@ -1,10 +1,58 @@
 [
     {
-        "title": "skibidi",
-        "data": "2024-09-19",
+        "title": "Pick Up Trash",
+        "data": "2024-09-24",
+        "place": "Home",
+        "duration": "23:15-23:20",
+        "description": "Picking Up Trash",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "hijndfojbiosejrtobjteraob",
+        "data": "2024-09-24",
         "place": "aerg",
-        "duration": "21:47-02:41",
-        "description": "aergaergargearg",
-        "name": "kaizhang"
+        "duration": "18:31-22:34",
+        "description": "earfaerf",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "arverdaergaregerg",
+        "data": "2024-09-24",
+        "place": "aref",
+        "duration": "18:43-23:41",
+        "description": "aergaerg",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "Event 1",
+        "data": "2024-09-22",
+        "place": "here",
+        "duration": "23:32-23:35",
+        "description": "here",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "Event 2",
+        "data": "2024-09-22",
+        "place": "here",
+        "duration": "23:35-23:39",
+        "description": "test",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "Table Tennis Meetings",
+        "data": "2024-09-24",
+        "place": "Mr. Hannon's Room",
+        "duration": "18:05-18:15",
+        "description": "Table Tennis",
+        "name": "kzhang2027@moreaucatholic.org"
+    },
+    {
+        "title": "hehehe",
+        "data": "2024-09-23",
+        "place": "aerg",
+        "duration": "18:06-18:10",
+        "description": "aergaerg",
+        "name": "kzhang2027@moreaucatholic.org"
     }
 ]

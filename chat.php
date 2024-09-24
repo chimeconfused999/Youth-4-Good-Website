@@ -13,6 +13,10 @@ if (!empty($message) && strlen($message) < 730) {
         trigger_error("Failed to write to file.", E_USER_ERROR);
     } else {
         echo "Message saved successfully.";
+        // Call the displaychat() function after message is saved
+        echo "<script type='text/javascript'>
+                displaychat(); 
+              </script>";
     }
 } else {
     // Handle validation failure

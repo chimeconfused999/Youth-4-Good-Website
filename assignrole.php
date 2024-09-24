@@ -1,13 +1,13 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Retrieve the buttonId, filePat, and buttonkid from the POST request
+    // Retrieve the buttonId and filePat from the POST request
     $buttonId = isset($_POST['buttonId']) ? $_POST['buttonId'] : null;
     $filePat = isset($_POST['filePat']) ? $_POST['filePat'] : null;
     $buttonkid = isset($_POST['buttonkid']) ? $_POST['buttonkid'] : null;
 
-    // Check if all values are present
+    // Check if both values are present
     if (!$buttonId || !$filePat || !$buttonkid) {
-        echo "Error: buttonId, filePat, or buttonkid is missing!";
+        echo "Error: buttonId or filePat or time is missing!";
         exit;
     }
 
@@ -27,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $found = false;
     foreach ($fileContents as $index => $line) {
         if (trim($line) === $buttonId) {
-            // Set the line to buttonkid instead of the buttonId
-            $fileContents[$index-1] = $buttonkid;
+            // Set the line to "joined" instead of the buttonId
+            $fileContents[$index-2] = $buttonkid;
             $found = true;
             break;
         }
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($found) {
         // Write the updated content back to the file
         if (file_put_contents($filePath, implode(PHP_EOL, $fileContents))) {
-            echo "Button status updated to '$buttonkid' successfully!";
+            echo "Button status updated to 'joined' successfully!";
         } else {
             echo "Error: Could not update the file.";
         }
@@ -47,3 +47,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 } else {
     echo "Invalid request.";
 }
+?>

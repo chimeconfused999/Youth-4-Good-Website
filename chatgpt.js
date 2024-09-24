@@ -46,8 +46,8 @@ async function chatbotMessage(message, curchat) {
         {
           role: "system",
           content: `Here is all of the Event Calendar Data: ${JSON.stringify(data)}. Ignore all data with no title. 
-          Ignore this one if empty, but it contains information relative to the event chatroom you are in: ${chatData}. 
-          If you are prompted, the current date is ${eformattedDate} and the time is ${formattedTime}.`,
+          Ignore this one if empty, but it contains information relative to the event chatroom you are in. Also, use this information before the other data to answer questions if the data exists: ${chatData}. 
+          If you are prompted, the current date is ${eformattedDate} and the time is ${formattedTime}. Your answer should be in one line and one line only. And linebreaks will break the code.`,
         },
         {
           role: "user",

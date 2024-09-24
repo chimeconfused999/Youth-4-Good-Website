@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Uploaded Images</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div id = "ourtutors"></div>
+
+    
+      <div id = "leadicon" class = "chatbuttonicon"></div>
+    <div id = "chaticon2" class = "chatbuttonicon"></div>
+    <div id="mydiv2" class = "mydiv2">
+      <!-- Include a header DIV with the same name as the draggable DIV, followed by "header" -->
+      <div class="mydivheader"><a>Service Hours Leaderboard</a> (Drag to Move)</div>
+        <div class = "Container" id = "leaderboardContainer"></div>
+
+    </div>
+    <div id="mydiv" class = "mydiv">
+      <!-- Include a header DIV with the same name as the draggable DIV, followed by "header" -->
+      <div id="mydivheader"><a id = "chatTitle">HI</a> (Drag to Move)</div>
+        <div class = "Container" id = "chatContainer"></div>
+          <div id = "chat"><form id = "chatform" onsubmit="return false">
+          <input type="text" id="chatbox" name="name" placeholder ="Enter your message:">
+          </form>
+        <button id = "chatbut2" onclick = "switchtogeneral()">Switch To General</button></div>
+        <script type = "module">
+              import { chatbotMessage } from './chatgpt.js';
+
+              // Example usage
+
+              async function sendMessage() {
+
+                  const message = document.getElementById('chatbox').value.trim();
+
+                  if(message.includes("@gpt")){
+
+                  var chatbox = document.getElementById("chatbox");
+
+                  var xhr = new XMLHttpRequest();
+                  xhr.open("POST", "chat.php", true);
+                  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                  // Disable the input field before sending the request
+                  chatbox.disabled = true;
+
+                  xhr.onreadystatechange = function() {
+                      if (xhr.readyState === 4 && xhr.status === 200) {
+                          // Re-enable the input field after the response is received
+                          chatbox.disabled = false;
+
+                      }
+                  };
+
+                  var curChat = encodeURIComponent(localStorage.getItem("curchat"));
+                  var name = encodeURIComponent(localStorage.getItem("name"));
+                  var chatboxValue = encodeURIComponent(chatbox.value);
+
+                  // Create the data string with newlines encoded as %0A
+                  var data = `username=${curChat}%0A${name} %0A${chatboxValue}`;
+                  xhr.send(data);
+
+
+                  // Clear chatbox after sending
+                  displaychat();
+                  document.getElementById("chatContainer").scrollTop = document.getElementById("chatContainer").scrollHeight;
+
+
+
+                var curChat3 = localStorage.getItem("curchat");
+                 curChat3 = curChat3.replace("Chat","").trim()
+                //alert(curChat3 + " " + message);
+                const response = await chatbotMessage(message, curChat3);
+                  var xhr = new XMLHttpRequest();
+                  xhr.open("POST", "chat.php", true);
+                  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                  // Disable the input field before sending the request
+                  chatbox.disabled = true;
+
+                  xhr.onreadystatechange = function() {
+                      if (xhr.readyState === 4 && xhr.status === 200) {
+                          // Re-enable the input field after the response is received
+                          chatbox.disabled = false;
+
+                      }
+                  };
+
+                  var curChat2 = encodeURIComponent(localStorage.getItem("curchat"));
+                      //alert(curChat2);
+
+
+                  name = encodeURIComponent("Youth4GoodBot");
+                  chatboxValue = encodeURIComponent(response);
+
+                  // Create the data string with newlines encoded as %0A
+                  data = `username=${curChat2}%0A${name} %0A${chatboxValue}` + " To Call me, type @gpt and the message you want to ask me.";
+                  xhr.send(data);
+
+                  // Cl2ear chatbox after sending
+                  chatbox.value = "";
+                  displaychat();
+                      document.getElementById("chatContainer").scrollTop = document.getElementById("chatContainer").scrollHeight;
+              }
+              }
+              window.addEventListener("keypress", function(event) {
+                // If the user presses the "Enter" key on the keyboard
+                if (event.key === "Enter") {
+                  event.preventDefault();
+
+                  sendMessage()
+                }
+              });
+
+          </script>
+    </div>
+    <div id="siteheader">
+        <div id="Logoname" >YOUTH4GOOD</div>
+        <div id = "siteheader-content">
+            <span id = "overview" onclick="transitionToPage('index.php')" >Overview</span>
+            <span id = "Tutoring" onclick="transitionToPage('tutor.html')" class = "currentpage">Tutoring</span>
+        </div>
+    </div>
+    <div id = "TITLE">
+        <h1>Tutoring</h1>
+        <!-- <button onclick="notifyMe('skbidi')">Notify me!</button> -->
+        <!-- <button id="notificationBtn" onclick="Notifaction()"><img src = "bell.png" alt = "notification" width = "35px" height = "35px"></button> -->
+        <div class="line-1"></div>
+        <div id = "titledescription">
+            <h2>Add images for tutors to see progress etc.</h2>
+        </div>
+    </div>
+    <div id = "uploadshit">
+        <h2>Upload an Image</h2>
+        <form id="imageUploadForm" method="POST" enctype="multipart/form-data">
+            <input type="file" id="imageFile" name="imageFile" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+        <br>
+        
+    </div>
+    <h3 id = "HI" class = "tutoronly">Uploaded Images:</h3>
+    <div class = 'tutoronly' id="status"></div>
+
+    
+    <div class = 'tutoronly' id="uploadedImages"></div> <!-- To display all images -->
+
+    <script>
+        // Function to fetch and display all uploaded images
+        async function loadUploadedImages() {
+            try {
+                const response = await fetch('list_uploads.php');
+                const imagePaths = await response.json();
+                const imagesDiv = document.getElementById('uploadedImages');
+                
+                imagesDiv.classList.add("imagesDiv");
+                imagesDiv.innerHTML = ''; // Clear previous images
+
+                // Loop through each image and create an img element
+                years = [];
+                months = [];
+                days = [];
+                times = [];
+                names = [];
+                imagePaths.forEach(imagePath => {
+                    year = imagePath.slice(8, 12);
+                    month = imagePath.slice(12, 14);
+                    day = imagePath.slice(14, 16);
+                    time = imagePath.slice(17, 19);
+
+                    // Adjust name extraction logic for jpeg or other formats
+                    if (imagePath.slice(imagePath.length - 4, imagePath.length) == "jpeg") {
+                        name = imagePath.slice(23, imagePath.length - 5);
+                    } else {
+                        name = imagePath.slice(23, imagePath.length - 4);
+                    }
+
+                    const imgElement = document.createElement('img');
+                    imgElement.className = ".tutoronly";
+                    imgElement.src = imagePath;
+                    imgElement.alt = 'Uploaded Image';
+                    imgElement.style.maxWidth = '16vw'; // Style the image           <imgElement class="style max"></imgElement>
+                    imgElement.style.height = 'auto';
+                    imgElement.style.margin = '10px';
+
+                    // Create a container div to group the year, month, day, time, and name
+                    const infoDiv = document.createElement('div');
+                    infoDiv.classList.add('infoContainer'); // Add a class for styling
+
+            
+                        const yearElement = document.createElement('span');
+                        yearElement.className = ".tutoronly";
+                        yearElement.textContent = year.trim() + "/";
+                        infoDiv.appendChild(yearElement);
+                        years.push(year);
+                    
+                    
+                        const monthElement = document.createElement('span');
+                        monthElement.className = ".tutoronly";
+                        monthElement.textContent = month.trim() + "/";
+                        infoDiv.appendChild(monthElement);
+                        months.push(month);
+                    
+    
+                        const dayElement = document.createElement('span');
+                        dayElement.className = ".tutoronly";
+                        dayElement.textContent = day.trim();
+                        infoDiv.appendChild(dayElement);
+                        days.push(day);
+          
+                        const timeElement = document.createElement('span');
+                        const newtime = convertTo12Hour(time + ":00");
+                        timeElement.className = ".tutoronly";
+                        timeElement.textContent = newtime;
+                        infoDiv.appendChild(timeElement);
+                        times.push(time);
+                    
+
+                    // Add the uploader's name
+                    const nameElement = document.createElement('span');
+                    nameElement.textContent = " Uploaded by: " + name;
+                    nameElement.className = ".tutoronly";
+                    infoDiv.appendChild(nameElement);
+                    names.push(name);
+
+                    // Append the info div and image to the imagesDiv
+                    imagesDiv.appendChild(infoDiv);
+                    imagesDiv.appendChild(imgElement);
+                });
+            } catch (error) {
+                console.error('Error loading images:', error);
+            }
+        }
+
+
+        // Load uploaded images when the page loads
+        window.onload = loadUploadedImages;
+
+        // Handle the image upload
+        document.getElementById('imageUploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            let formData = new FormData();
+            formData.append('imageFile', document.getElementById('imageFile').files[0]);
+            formData.append('name', localStorage.getItem("name")); // Add name to form data
+
+            try {
+                const response = await fetch('upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                document.getElementById('status').innerText = result.message;
+
+                // Reload the uploaded images after a successful upload
+                loadUploadedImages();
+            } catch (error) {
+                document.getElementById('status').innerText = 'Error uploading the image.';
+            }
+        });
+
+    </script>
+    <script src = "script.js"></script>
+</body>
+</html>

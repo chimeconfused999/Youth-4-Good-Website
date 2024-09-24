@@ -1,8 +1,6 @@
-
-localStorage.setItem("name" , "kaizhang")
 let events = []
 var calendarGrid;
-var monthElement;
+var monthElement;//what is going on
 var currentMonths;
 var year ;
 let currentMonthIndex;
@@ -13,25 +11,141 @@ let eventdet = true;
 let editbar = true;
 let infobar = true;
 let chatbar = true;
+
+// localStorage.removeItem("Tutor1")
+// localStorage.removeItem("Tutor2")
+
+let leadbar = true;
 var elmnt = document.getElementById("mydiv");
 var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 // main.js
 
 
 // Call the function and handle its response
-localStorage.setItem("name","kaizhang")
 
+function convertTo12Hour(time24) {
+  let [hours, minutes] = time24.split(':');
+  let period = 'AM';
+
+  hours = parseInt(hours, 10);
+
+  if (hours >= 12) {
+    period = 'PM';
+    if (hours > 12) {
+      hours -= 12;
+    }
+  } else if (hours === 0) {
+    hours = 12;
+  }
+    return `${hours}:${minutes} ${period}`;
+  }
+let notifiedEvents = {}; // Keeps track of notified events
+
+function checkifEventComing() {
+  fetch('data.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json(); // Parse the JSON data
+    })
+    .then(data => {
+      const now = new Date();
+
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles', // Adjust to your timezone
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+
+      const formatterTime = new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false, // 24-hour format
+      });
+
+      const eformattedDate = formatter.format(now);
+      const formattedTime = formatterTime.format(now);
+
+      // Format date to YYYY-MM-DD
+      const [emonth, eday, eyear] = eformattedDate.split('/');
+      const [currentHours, currentMinutes] = formattedTime.split(':').map(Number);
+      const formattedDate = `${eyear}-${emonth}-${eday}`;
+
+      data.forEach(event => {
+        if(event.data == formattedDate){
+          const [eventStartHours, eventStartMinutes] = event.duration.slice(0, 5).split(':').map(Number);
+          const timeDifference = (60 * (eventStartHours - currentHours)) + (eventStartMinutes - currentMinutes);
+
+          // Ensure notifiedEvents has a state for this event
+          if (!notifiedEvents[event.title]) {
+            notifiedEvents[event.title] = { notified10: false, notified5: false };
+          }
+
+          // Notify exactly 10 minutes before
+
+          if (timeDifference === 10 && !notifiedEvents[event.title].notified10) {
+            notifyMe(`${event.title} is starting in 10 minutes!`);
+            notifiedEvents[event.title].notified10 = true;
+
+
+          }
+
+          // Notify exactly 5 minutes before
+          if (timeDifference === 5 && !notifiedEvents[event.title].notified5) {
+            notifyMe(`${event.title} is starting in 5 minutes!`);
+            notifiedEvents[event.title].notified5 = true;
+          }
+
+          // Clear notifications for past events
+          if (timeDifference < 0) {
+            delete notifiedEvents[event.title];
+          }
+        }
+        });
+
+      })
+      .catch(error => {
+        console.error('There was a problem with fetching the text file:', error);
+      });
+
+}
+
+
+setInterval(() => checkifEventComing(), 60000);
 
 document.addEventListener('DOMContentLoaded', function() {
   preloadImages(startAfterPreload);
 });
+checkifEventComing()
+
+function notifyMe(str) {
+  if (!("Notification" in window)) {
+    alert("This browser does not support desktop notification");
+  } else if (Notification.permission === "granted") {
+    const notification = new Notification(str);
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        const notification = new Notification(str);
+      }
+    });
+  }
+}
 
 function startAfterPreload(){
 
-  checkName();
+  //checkName();
   checkOwnership();
-  calendar();
-  addExistingEvents();
+
+  if (window.location.pathname === '/' || window.location.pathname.includes('index.php')){
+
+    calendar();
+    addExistingEvents();
+  }
+
 
   if(localStorage.getItem("curchat") == null){
     localStorage.setItem("curchat","general")
@@ -63,12 +177,74 @@ function startAfterPreload(){
     });
   }, 1000); 
 
+  const storedName = localStorage.getItem("name");
+  fetch('members.json')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json(); // Parse the JSON data
+  })
+  .then(data => {
+
+    if(!data.includes(storedName) && storedName != null){
+      alert(storedName + " is not a member, adding now")
+        $.ajax({
+        type: "POST",
+        url: "members.php",
+        contentType: "application/json",
+        data: JSON.stringify(storedName),
+        success: function(response) {
+          console.log("Data sent successfully:", response);
+        },
+        error: function(error) {
+          console.error("Error sending data:", error);
+        }
+      });
+    }
+
+  })
+  .catch(error => {
+    console.error('There was a problem with the fetch operation:', error);
+  });
+
+  const storedEmail = localStorage.getItem("nameemail");
+
+  fetch('email.json')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json(); // Parse the JSON data
+  })
+  .then(data => {
+
+    if(!data.includes(storedEmail) && storedEmail != null){
+      alert(storedEmail + " adding now")
+        $.ajax({
+        type: "POST",
+        url: "email.php",
+        contentType: "application/json",
+        data: JSON.stringify(storedEmail),
+        success: function(response) {
+          console.log("Data sent successfully:", response);
+        },
+        error: function(error) {
+          console.error("Error sending data:", error);
+        }
+      });
+    }
+
+  })
+  .catch(error => {
+    console.error('There was a problem with the fetch operation:', error);
+  });
 }
 
 window.transitionToPage = function(href, id) {
   document.querySelector('body').style.opacity = 0
   setTimeout(function() { 
-      window.location.href = href
+      window.location.href = href;
   }, 300)
 }
 
@@ -134,7 +310,7 @@ function addExistingEvents(){
       return response.json(); // Parse the JSON data
   })
   .then(data => {     
-    
+
     for (i = 0; i < data.length; i++) {
       addEvent2(data[i].title, data[i].data, data[i].place, data[i].duration, data[i].description); 
 
@@ -145,46 +321,6 @@ function addExistingEvents(){
   });
 }
 
-function checkName(){
-  if(localStorage.getItem("name") == null){
-    localStorage.setItem("serviceminutes",0)
-    var signup = prompt("Please enter your name");
-
-    fetch('members.json')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json(); // Parse the JSON data
-    })
-    .then(data => {
-      console.log(data)
-      while(localStorage.getItem("name")==null){
-      if(!data.includes(signup)){
-        localStorage.setItem("name",signup)
-        $.ajax({
-          type: "POST",
-          url: "members.php",
-          contentType: "application/json",
-          data: JSON.stringify(signup),
-          success: function(response) {
-            console.log("Data sent successfully:", response);
-          },
-          error: function(error) {
-            console.error("Error sending data:", error);
-          }
-        });
-      } else{
-        signup = prompt("Username taken, please enter a new one.")
-      }
-      }
-    })
-    .catch(error => {
-      console.error('There was a problem with the fetch operation:', error);
-    });
-
-  }
-}
 
 function checkOwnership(){
   fetch('owners.json')
@@ -195,7 +331,7 @@ function checkOwnership(){
     return response.json(); // Parse the JSON data
   })
   .then(data => {
-    if (data.includes(localStorage.getItem("name"))) {
+    if (data.includes(localStorage.getItem("nameemail"))) {
         // Use querySelectorAll to select all elements with the 'adminonly' class
         var elements = document.querySelectorAll('.adminonly');
 
@@ -206,6 +342,22 @@ function checkOwnership(){
             // Replace 'adminonly' with 'dropbtn' while keeping other classes intact
             element.classList.replace('adminonly', 'dropbtn');
         });
+      var elements2 = document.querySelectorAll('.tutoronly');
+      elements2.forEach(function(element2) {
+          
+          element2.classList.replace('tutoronly', 'tutors');
+      });
+    }
+    else{
+      var elements = document.querySelectorAll('.adminonly');
+
+      // Loop through the NodeList using forEach
+      elements.forEach(function(element) {
+          // Example alert to show the element's id
+          //alert(element.id);
+          // Replace 'adminonly' with 'dropbtn' while keeping other classes intact
+          element.style.display = "none";
+      });
     }
 
 
@@ -259,8 +411,10 @@ function calendar(){
          console.error('Error fetching or parsing JSON:', error);
     });
 
-
+  if(window.location.pathname === '/' || window.location.pathname.includes('index.php')){
     createCalendar();
+  }
+
 }
 
 function createCalendar() {
@@ -345,7 +499,7 @@ function send(){
     place: document.getElementById("eventLocation").value,
     duration: document.getElementById("eventStart").value + "-" + document.getElementById("eventEnd").value,
     description: document.getElementById("eventDescription").value,
-    name: localStorage.getItem("name")
+    name: localStorage.getItem("nameemail")
   }
       $.ajax({
         type: "POST",
@@ -401,7 +555,7 @@ function joinEvent() {
   const safeTitle = encodeURIComponent(title);  // Sanitizing the title
   var data = {
     title: document.getElementById("eventTitleDisplay").innerHTML,
-    name: localStorage.getItem("name")
+    email: localStorage.getItem("nameemail")
   };
   if(document.getElementById("joinbutton").innerHTML.trim() == "Join"){
     console.log("Sending data:", data); // Log the data to check its values
@@ -426,6 +580,7 @@ function joinEvent() {
     });
   } else {
     if(confirm("Are you sure you want to leave this event?")){
+      
       document.getElementById("joinbutton").innerHTML = "Join";
       document.getElementById("mcount").textContent = parseInt(document.getElementById("mcount").textContent) - 1;
       document.getElementById("joinbutton").style.backgroundColor = "#52abff";
@@ -513,27 +668,42 @@ document.body.addEventListener('click', function (event) {
       }
     }
   }
-  if (!event.target.closest('.event-details-panel') && document.getElementById("eventDetailsPanel").classList.contains("show-panel") && eventdet == false && infobar == true && editbar == true && !event.target.closest('.event') && chatbar == true){
+  if (document.getElementById("eventDetailsPanel")){
+    if (!event.target.closest('.event-details-panel') && document.getElementById("eventDetailsPanel").classList.contains("show-panel") && eventdet == false && infobar == true && editbar == true && !event.target.closest('.event') && chatbar == true && leadbar == true){
 
-    eventdet = true;
-    closeEventDetails();
+      eventdet = true;
+      if(window.location.pathname === '/' || window.location.pathname.includes('index.php')){
+        closeEventDetails();
+      }
+
+    }
   }
+
   if (!event.target.closest('.event-details-panel2') && infobar == false && !event.target.closest('.joinedpple')){
     infobar = true;
-    closeEventDetails2();
+    if(window.location.pathname === '/' || window.location.pathname.includes('index.php')){
+      closeEventDetails2();
+    }
   }
   if (!event.target.closest('.event-details-panel2') && editbar == false){
     editbar = true;
-    closeeditdet();
+    if(window.location.pathname === '/' || window.location.pathname.includes('index.php')){
+      closeeditdet();
+    }
   }
   if (!event.target.closest('.mydiv') && !event.target.closest('.chatbuttonicon') && chatbar == false){
     chatbar = true;
     closechatbar();
   }
+  if (!event.target.closest('.mydiv2') && !event.target.closest('.chatbuttonicon') && leadbar == false){
+    leadbar = true;
+    closeleadbar();
+  }
 
 });
 
 function addEvent2(title, eventDate, place, duration, description) {
+  if(title != "" && eventDate != "" && place != "" && duration != "-" && description != null){
   const now = new Date();
 
   // Format the current date and time
@@ -566,27 +736,34 @@ function addEvent2(title, eventDate, place, duration, description) {
     .then(data => {       
       for (let event of data) {
         if (event.title === title) {
-          // Extract start and end hours and minutes
+          // Extract start and end hours and minutes from the event duration
           const [eventStartHours, eventStartMinutes] = event.duration.slice(0, 5).split(':').map(Number);
           const [eventEndHours, eventEndMinutes] = event.duration.slice(6).split(':').map(Number);
 
+          // Extract the current time hours and minutes
           const [currentHours, currentMinutes] = formattedTime.split(':').map(Number);
 
-          // Ensure the event date matches today’s date
-          const isSameDay = event.data === formattedDate;
+          // Parse the event and current dates for comparison
+          const eventDate = new Date(event.data);       // Convert event data (string) to Date object
+          const todayDate = new Date(formattedDate);    // Convert current date (string) to Date object
 
-          // Check if the event has ended
-          const isEventEnded = (
-            eventEndHours < currentHours || 
-            (eventEndHours === currentHours && eventEndMinutes <= currentMinutes)
+          // Check if the event is before today
+          const isBeforeToday = eventDate < todayDate;
+
+          // Check if the event is today and has already ended
+          const isSameDay = eventDate.getTime() === todayDate.getTime(); // Ensure same day
+          const isEventEndedToday = (
+            currentHours > eventEndHours || 
+            (currentHours === eventEndHours && currentMinutes >= eventEndMinutes)
           );
 
-          // If the event has ended, calculate total
-          if (isEventEnded) {
+          // If the event is before today or has ended today, calculate the total
+          if (isBeforeToday || (isSameDay && isEventEndedToday)) {
             calculatetotal(event.title, eventEndHours, eventEndMinutes);
           }
         }
       }
+
     })
     .catch(error => {
       console.error('Error fetching data:', error);
@@ -630,9 +807,11 @@ function addEvent2(title, eventDate, place, duration, description) {
       showEventDetails(title, eventDate, place, duration, description);
     });
 
+    eventElement.classList.add("eventElement");
     payPiv.appendChild(eventElement);
   } else {
     console.log("Invalid date selected.");
+  }
   }
 }
 
@@ -643,7 +822,7 @@ function addEvent() {
     const eventDate = document.getElementById('eventDate').value;
 
     const eventplace = document.getElementById('eventLocation').value;
-    const eventDuration = document.getElementById('eventDuration').value + " hour(s)";
+    const eventDuration = document.getElementById('eventStart').value + "-" + document.getElementById('eventEnd').value;
     const eventDescription = document.getElementById('eventDescription').value;
     var year = parseInt(eventDate.split('-')[0],10);
     var month = parseInt(eventDate.split('-')[1],10);
@@ -716,7 +895,15 @@ function addEvent() {
 //   }
 // }
 
-function showEventDetails(title, date, place, duration, description) {
+function showEventDetails(title, date, place, euration, description) {
+  const [year2, month2, day2] = date.split('-').map(Number);
+  const [starttime,endtime] = euration.split("-");
+  newstarttime = convertTo12Hour(starttime)
+  newendtime = convertTo12Hour(endtime)
+  duration = newstarttime + "-" + newendtime;
+
+
+
   textLines = []
   document.getElementById('eventTitleDisplay').textContent = title;
   document.getElementById('eventDateDisplay').textContent = date;
@@ -789,6 +976,7 @@ function showEventDetails(title, date, place, duration, description) {
             (eventEndHours === currentHours && eventEndMinutes <= currentMinutes) // If it's the same hour, check minutes
         )
         //alert(currentHours, currentMinutes, eventEndMinutes, eventEndHours)
+
         // If both conditions are met, update the button text
         if (isSameDay && isEventStarted && !isEventEnded) {
             document.getElementById("joinbutton").textContent = "ATTENDANCE STARTED";
@@ -818,14 +1006,18 @@ function showEventDetails(title, date, place, duration, description) {
   let joinButton = document.getElementById('joinbutton');
   //add eventDay == currentDay later;
 
-  if (eventYear == currentYear && eventMonth == currentMonth2) {
+  if (year2 > currentYear || 
+       (year2 === currentYear && month2 > currentMonth2) || 
+       (year2 === currentYear && month2 === currentMonth2 && day2 >= currentDay)) {
 
     if (joinButton) {
       textLines = []
         joinButton.style.display = 'block';
+      document.getElementById("changechat").style.display = "block";
+      document.getElementById("changechat").style.display = "block";
       const title = document.getElementById("eventTitleDisplay").textContent.trim();
       const safeTitle = encodeURIComponent(title)+".txt";  // Sanitizing the title
-      alert(safeTitle)
+      //alert(safeTitle)
 
       fetch(safeTitle)
 
@@ -839,7 +1031,7 @@ function showEventDetails(title, date, place, duration, description) {
       .then(data => {       
         const textLines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-        const userName = localStorage.getItem("name");
+        const userName = localStorage.getItem("nameemail");
         //alert(textLines.includes(userName))
 
         // Get the user's name from local storage
@@ -866,7 +1058,9 @@ function showEventDetails(title, date, place, duration, description) {
   } else {
 
     if (joinButton) {
-        joinButton.style.display = 'none';
+      document.getElementById("closeevent").style.display = "none";
+      document.getElementById("changechat").style.display = "none";
+      joinButton.style.display = "none";
     }
   }
 
@@ -896,111 +1090,172 @@ function closeeditdet(){
 function showeditdet(){
   document.getElementById('editDetails').classList.add("show-panel2");
 }
-function sidebar(){
 
-  if (document.getElementById('eventDetailsPanel2').classList.contains("show-panel2")){
+function sidebar() {
+  const eventDetailsPanel = document.getElementById('eventDetailsPanel2');
+
+  if (eventDetailsPanel.classList.contains("show-panel2")) {
     closeEventDetails2();
     infobar = true;
-  }
-  else{
+  } else {
     showEventDetails2();
-    document.getElementById("joinedppl").innerHTML = '';
-    let eventtitle = document.getElementById("eventTitleDisplay").textContent;
-    var textLines = [];
-    safeTitle = encodeURIComponent(eventtitle);
-    fetch(safeTitle+'.txt')
+    const container = document.getElementById("joinedppl");
+    container.innerHTML = '';  // Clear the content
+
+    const eventTitle = document.getElementById("eventTitleDisplay").textContent;
+    const safeTitle = encodeURIComponent(eventTitle);
+
+    fetch(safeTitle + '.txt')
       .then(response => {
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          return response.text();
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text();
       })
       .then(data => {
-        textLines = data.split('\n')
+        const textLines = data.split('\n');
+        let isOwner = false;
+        let isOfficer = false;
 
+        for (let i = 2; i < textLines.length; i += 3) {
+          const role = textLines[i - 2].toLowerCase();
+          const arrivalStatus = textLines[i - 1].trim();
+          const name = textLines[i];
 
-        for (let i = 2; i<textLines.length;i+=3){
-          if((textLines[i-2] == "owner" || textLines[i-2] == "officer") && textLines[i] == localStorage.getItem("name")){
-            //add permissions
-            alert("wow you're the owner")
-            //make officer button
-            
+          // Check if the current user is an owner or officer
+          if (role === "owner" && name === localStorage.getItem("nameemail")) {
+            isOwner = true;
+            isOfficer = true;
+          } else if (role === "officer" && name === localStorage.getItem("nameemail")) {
+            isOfficer = true;
           }
-          if (textLines[i]) {
-              
 
-              const nameElement = document.createElement('span');
-              nameElement.id = textLines[i]
-              nameElement.textContent = textLines[i]; // Set the name text
+          // Create name and role element
+          const nameElement = document.createElement('span');
+          nameElement.id = name;
+          nameElement.textContent = `${name} (${role.charAt(0).toUpperCase() + role.slice(1)})`;  // Display role next to name
 
-              // Create a button
-              const button = document.createElement('button');
-              button.textContent = "Here"; // Set button text
-            button.id = document.getElementById("eventTitleDisplay").textContent;
-            button.className = "joinbutton"
-            const now = new Date();
-  
-            const formatterTime = new Intl.DateTimeFormat('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false, // Use 24-hour format
-            });
+          // Append name element
+          container.appendChild(nameElement);
+          container.appendChild(document.createElement('br'));
 
-            // Get the formatted date in MM/DD/YYYY format
-            
-            const formattedTime = formatterTime.format(now);
+          // Add the role input form immediately after the name
+          
+
+          // Create arrival button based on the user's arrival status
+          const button = document.createElement('button');
+          button.className = "button100";
+
+          if (arrivalStatus === "not arrived") {
+            button.textContent = "Here";
             button.onclick = function() {
-                data = {
-                  buttonId: localStorage.getItem("name"),
-                  buttonkid: formattedTime,
-                  filePat: document.getElementById("eventTitleDisplay").textContent
-                }
-                  //alert("comming soon")
-                // change txt file and add checkmark
-              $.ajax({
-                  type: 'POST',
-                  url: 'mark.php', // PHP file to process the request
-                  data: data,
-                  success: function(response) {
-                      // Display success message or error from the PHP response
-                      $('#responseMessage').text(response);
-                  },
-                  error: function(xhr, status, error) {
-                      // Display error if the request fails
-                      $('#responseMessage').text('An error occurred: ' + error);
-                  }
-              });
-              };
-
-              // Create a <br> element
-              const lineBreak = document.createElement('br');
-            nameElement.style.display = 'block';
-            button.style.display = 'block';
-            lineBreak.style.display = 'block';
-            nameElement.className = "joinedpple";
-            button.className = "joinedpple";
-            lineBreak.className = "joinedpple";
-
-
-              // Append all elements to the container
-              const container = document.getElementById('joinedppl');
-              container.appendChild(nameElement);  // Add the name
-              container.appendChild(button);      // Add the button
-              container.appendChild(lineBreak);   // Add the line break
-
-
+              markArrival(name, eventTitle);
+            };
+          } else if (!arrivalStatus.includes("minutes")) {
+            button.textContent = "Arrived at " + convertTo12Hour(arrivalStatus);
+          } else {
+            button.textContent = "Finished";
           }
-
+          
+          // Append the button after the role form
+          if (isOwner || isOfficer) {
+            addRoleForm(name, container, isOwner, eventTitle);
+            container.appendChild(button);
+          }
+          container.appendChild(document.createElement('br'));
         }
-
       })
       .catch(error => {
-          console.error('There was a problem with fetching the text file:', error);
+        console.error('There was a problem with fetching the text file:', error);
       });
-    setTimeout(function(){infobar=false},450)
+
+    setTimeout(() => { infobar = false }, 450);
   }
 }
+
+function markArrival(name, eventTitle) {
+  const now = new Date();
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  const data = {
+    buttonId: name,
+    buttonkid: formattedTime,
+    filePat: eventTitle
+  };
+
+  $.ajax({
+    type: 'POST',
+    url: 'mark.php',
+    data: data,
+    success: function(response) {
+      $('#responseMessage').text(response);
+      
+    },
+    error: function(xhr, status, error) {
+      $('#responseMessage').text('An error occurred: ' + error);
+    }
+  });
+  sidebar()
+  sidebar()
+
+   // Refresh the sidebar
+}
+
+function addRoleForm(name, container, isOwner, eventTitle) {
+  const form = document.createElement('form');
+  const label = document.createElement('label');
+  const input = document.createElement('input');
+
+  input.type = 'text';
+  input.width = "150px";
+  input.className = "input100";
+  input.style.color = 'black';  // Text color
+  input.placeholder = isOwner ? "Officer or Owner gives permissions" : "Enter new role";
+
+  input.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();  // Prevent form submission
+      if (!isOwner && (input.value.toLowerCase() === "owner" || input.value.toLowerCase() === "officer")) {
+        alert("You don't have permission to do this!");
+      } else {
+        const data = {
+          buttonId: name,
+          buttonkid: input.value,
+          filePat: eventTitle
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: 'assignrole.php',
+          data: data,
+          success: function(response) {
+            $('#responseMessage').text(response);
+            sidebar()
+            sidebar()
+          },
+          error: function(xhr, status, error) {
+            $('#responseMessage').text('An error occurred: ' + error);
+          }
+        });
+      }
+    }
+  });
+
+  label.textContent = "Give Role: ";
+  form.appendChild(label);
+  form.appendChild(input);
+  container.appendChild(form);
+}
+
+
+
+
+
 
 function showEventDetails2(){
   const panel = document.getElementById('eventDetailsPanel2');
@@ -1030,7 +1285,7 @@ function changetochat(){
 
 function chatsend() {
     var chatbox = document.getElementById("chatbox");
-    
+
     if (!chatbox.value.includes("@gpt") && chatbox.value.trim() !== "" && chatbox.value.trim().length <= 1500) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "chat.php", true);
@@ -1048,7 +1303,7 @@ function chatsend() {
         };
 
         const curChat = encodeURIComponent(localStorage.getItem("curchat"));
-        const name = encodeURIComponent(localStorage.getItem("name"));
+        const name = encodeURIComponent(localStorage.getItem("nameemail"));
         const chatboxValue = encodeURIComponent(chatbox.value);
 
         // Create the data string with newlines encoded as %0A
@@ -1063,57 +1318,187 @@ function chatsend() {
         chatbox.value = "Message too long";
     }
 }
+function displaylb() {
+  if (document.getElementById("leaderboardContainer")) {
+    var textLines = [];
+
+    // Fetch the leaderboard, email, and members files in parallel
+    Promise.all([
+      fetch('leaderboard.txt').then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text();
+      }),
+      fetch('email.json').then(response => response.json()),
+      fetch('members.json').then(response => response.json())
+    ])
+    .then(([leaderboardData, emails, members]) => {
+      // Create an email-to-name mapping
+      const emailToNameMap = emails.reduce((map, email, index) => {
+        map[email] = members[index];
+        return map;
+      }, {});
+
+      // Split the leaderboard data by newlines
+      textLines = leaderboardData.split('\n');
+
+      var chat = [];
+
+      // Loop through the lines, assuming even index is a name (email) and odd index is the score
+      for (let i = 0; i < textLines.length; i += 2) {
+        let email = textLines[i].trim();
+        let score = textLines[i + 1] ? parseInt(textLines[i + 1].trim(), 10) : 0; // Convert score to integer
+
+        // Get the name from the email-to-name map, or use the email if no match is found
+        let name = email;
+
+        // Only add if the name (or email) exists
+        if (name) {
+          chat.push({ name: name, score: score });
+        }
+      }
+
+      // Sort the chat array by score in descending order
+      chat.sort(function(a, b) {
+        return b.score - a.score;
+      });
+
+      // Clear the existing leaderboard content
+      document.getElementById("leaderboardContainer").innerHTML = "";
+
+      // Display each player's name and score
+      chat.forEach(function(player) {
+        var row = document.createElement('tr');
+
+        // Name cell
+        var nameCell = document.createElement('td');
+        nameCell.className = "namestuf";
+        nameCell.innerHTML = emailToNameMap[player.name.trim()] + ":&nbsp;";
+
+        // Highlight the current user's name (assuming you store their email in localStorage)
+        if (player.name.trim() === localStorage.getItem("nameemail")) {
+          nameCell.style.color = "lightgreen";
+          nameCell.style.fontWeight = "bold";
+        } else {
+          nameCell.style.color = "black";
+        }
+        row.appendChild(nameCell);
+
+        // Score cell
+        var coinsCell = document.createElement('td');
+        coinsCell.className = "textstuf";
+        coinsCell.innerHTML = (player.score / 60).toString().slice(0, 6) + " hours";
+        row.appendChild(coinsCell);
+
+        // Append the row to the leaderboard container
+        document.getElementById("leaderboardContainer").appendChild(row);
+      });
+    })
+    .catch(error => {
+      console.error('There was a problem with fetching the text files:', error);
+    });
+  }
+}
 
 
-function displaychat(){
-  if (document.getElementById("chatbox")){
-    var textLines = []
-      fetch('chat.txt')
+
+
+displaylb()
+setInterval(displaylb,60000)
+function converttoname(email, callback) {
+  Promise.all([
+    fetch('email.json').then(response => response.json()),
+    fetch('members.json').then(response => response.json())
+  ])
+  .then(([emails, members]) => {
+    const emailIndex = emails.indexOf(email);
+    if (emailIndex !== -1 && emailIndex < members.length) {
+      const memberName = members[emailIndex];
+      callback(memberName); // Call the callback function with the result
+    } else {
+      console.error('Email not found or index out of bounds');
+    }
+  })
+  .catch(error => {
+    console.error('There was a problem with the fetch operation:', error);
+  });
+}
+
+// Example usage:
+
+
+
+function displaychat() {
+  if (document.getElementById("chatbox")) {
+    let textLines = [];
+    fetch('chat.txt')
       .then(response => {
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          return response.text();
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text();
       })
       .then(data => {
-        textLines = data.split('\n')
-          var chat = [];
-          for(i=2;i<textLines.length;i+=3){
+        textLines = data.split('\n');
+        const chat = [];
 
-            if(textLines[i-2] == localStorage.getItem("curchat")){
-              chat.push({ name: textLines[i-1], score: textLines[i] })
+        // Preload the email to name mapping before processing the chat
+        Promise.all([
+          fetch('email.json').then(res => res.json()),
+          fetch('members.json').then(res => res.json())
+        ])
+        .then(([emails, members]) => {
+          // Create a mapping between email and member names
+          const emailToNameMap = emails.reduce((map, email, index) => {
+            map[email] = members[index];
+            return map;
+          }, {});
+
+          for (let i = 2; i < textLines.length; i += 3) {
+            if (textLines[i - 2] === localStorage.getItem("curchat")) {
+              chat.push({ name: textLines[i - 1], score: textLines[i] });
+            }
+          }
+
+          document.getElementById("chatContainer").innerHTML = "";
+          chat.forEach(function (player) {
+            const row = document.createElement('tr');
+
+            const nameCell = document.createElement('td');
+            nameCell.className = "namestuf";
+
+            const email = player.name.trim();
+            const memberName = emailToNameMap[email] || email;
+
+            if (email === localStorage.getItem("nameemail")) {
+              nameCell.style.color = "lightgreen";
+              nameCell.style.fontWeight = "bold";
+            } else {
+              nameCell.style.color = "black";
             }
 
-          }
+            nameCell.innerHTML = memberName + ":\xa0";
+            row.appendChild(nameCell);
 
-        document.getElementById("chatContainer").innerHTML = "";
-        chat.forEach(function(player, index) {
-          //console.log(`${index + 1}. ${player.name}: ${player.score}`);
-          var row = document.createElement('tr');
-          //nameofbro
-          var nameCell = document.createElement('td');
-          nameCell.className = "namestuf";
-          nameCell.innerHTML = player.name.trim()+":\xa0";
-          nameCell.style.color = "black"
-          if (player.name == localStorage.getItem("name")){
-            nameCell.style.color = "lightgreen";
-            nameCell.style.fontWeight = "bold";
-          }
-          row.appendChild(nameCell);
-          //hisscore
-          var coinsCell = document.createElement('td');
-          coinsCell.className = "textstuf";
-          coinsCell.innerHTML = player.score;
-          row.appendChild(coinsCell);
-          //plzworkdaddy
-          document.getElementById("chatContainer").appendChild(row);  
+            const coinsCell = document.createElement('td');
+            coinsCell.className = "textstuf";
+            coinsCell.innerHTML = player.score;
+            row.appendChild(coinsCell);
+
+            document.getElementById("chatContainer").appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('There was a problem with fetching email or member data:', error);
+        });
       })
-    })
       .catch(error => {
-          console.error('There was a problem with fetching the text file:', error);
+        console.error('There was a problem with fetching the text file:', error);
       });
   }
 }
+
 
 
 // Execute a function when the user presses a key on the keyboard
@@ -1128,9 +1513,10 @@ window.addEventListener("keypress", function(event) {
 //just do like 5 seconds, it doesnt matter too much anyways
 displaychat();
 
-setInterval(displaychat,5000);
+setInterval(displaychat,6000);
 //editing stuff
 $('#eventForm').on('submit', function(e) {
+
     e.preventDefault(); // Prevent form submission from redirecting
 
 
@@ -1141,7 +1527,7 @@ $('#eventForm').on('submit', function(e) {
         eventDate: $('#1eventDate').val(),
         eventDuration: $('#1eventStart').val() + "-" + $("#1eventEnd").val(),       
         eventPlace: $('#1eventPlace').val(),
-        eventDescription: $('1#eventDescription').val()
+        eventDescription: $('#1eventDescription').val()
     };
 
   $.ajax({
@@ -1150,13 +1536,14 @@ $('#eventForm').on('submit', function(e) {
       data: JSON.stringify(formData),  // Convert formData object to JSON
       contentType: 'application/json', // Make sure the content type is JSON
       success: function(response) {
+        location.reload();
           console.log(response);  // Inspect response
       },
       error: function(xhr, status, error) {
           alert('An error occurred: ' + error);
       }
   });
-  
+
 
 });
 window.addEventListener('scroll', function() {
@@ -1170,7 +1557,7 @@ window.addEventListener('scroll', function() {
 
 function checkif(){
 
-  
+
   if($('#1eventTitle').val() != ""||
 $('#1eventDate').val() != ""|| $('#1eventStart').val() != ""||$('#1eventEnd').val() != "" ||$('#1eventPlace').val()!=""|| $('#1eventDescription').val()!=""){
     document.getElementById("submit-btn123").textContent = "Update Event";
@@ -1203,6 +1590,9 @@ function createTrail(x, y) {
   }, 800);  // Matches the animation duration
 }
 function calculatetotal(file, endhr, endmin) {
+ 
+
+  if(file != ""){
   const safetitle = encodeURIComponent(file) + ".txt";
 
   fetch(safetitle)
@@ -1213,28 +1603,28 @@ function calculatetotal(file, endhr, endmin) {
       return response.text(); // Use .text() for plain text files
     })
     .then(data => {
-      const textLines = data.split('\n'); // Split the text into lines
+      const textLines = data.split('\n'); //   Split the text into lines
 
       for (let i = 2; i < textLines.length; i += 3) {
 
-        if (textLines[i] === localStorage.getItem("name")) {
+        if (textLines[i] === localStorage.getItem("nameemail")) {
           const start = textLines[i - 1];
           const starthr = parseInt(start.slice(0, 2), 10);
           const startmin = parseInt(start.slice(3, 5), 10);
 
           // Fix the condition check
-          if (start !== "claimed") {
+          if (!start.includes("minutes") && start !== "not arrived") {
             // Get the current service minutes from localStorage, default to 0 if not set
             const currentMinutes = parseInt(localStorage.getItem("serviceminutes") || "0", 10);
 
             // Update service minutes
-            localStorage.setItem("serviceminutes", currentMinutes + 60 * (endhr - starthr) + (endmin - startmin));
+            localStorage.setItem("serviceminutes", parseInt(currentMinutes) + (60 * (endhr - starthr)) + (endmin - startmin));
 
-            leaderboardupdate();
+            
 
             const data = {
-              buttonId: localStorage.getItem("name"),
-              buttonkid: "claimed",
+              buttonId: localStorage.getItem("nameemail"),
+              buttonkid: (60 * (endhr - starthr)) + (endmin - startmin).toString() + "minutes",
               filePat: file
             };
 
@@ -1253,6 +1643,7 @@ function calculatetotal(file, endhr, endmin) {
               }
             });
           }
+          leaderboardupdate();
 
           // Track service hours here
         }
@@ -1261,6 +1652,7 @@ function calculatetotal(file, endhr, endmin) {
     .catch(error => {
       console.error('There was a problem with fetching the text file:', error);
     });
+}
 }
 
 
@@ -1310,8 +1702,10 @@ $.ajax = function() {
 
   return originalAjax.apply(this, arguments);
 };
+
 function leaderboardupdate() {
-  const name = localStorage.getItem("name");
+
+  const name = localStorage.getItem("nameemail");
   const serviceMinutes = localStorage.getItem("serviceminutes");
 
   // Add a log to check if the data is correct
@@ -1323,9 +1717,9 @@ function leaderboardupdate() {
   }
 
   const data = {
-    username: name, // Send username as a separate field
-    serviceminutes: parseInt(serviceMinutes, 10) // Send serviceminutes as a separate field
-  };
+    username: localStorage.getItem("nameemail").trim(),
+    serviceminutes: localStorage.getItem("serviceminutes").trim()
+  }
 
   $.ajax({
     type: "POST",
@@ -1346,6 +1740,7 @@ leaderboardupdate()
 
 
 dragElement(document.getElementById("mydiv"));
+dragElement(document.getElementById("mydiv2"));
 
 function dragElement(elmnt) {
   if (document.getElementById(elmnt.id + "header")) {
@@ -1392,7 +1787,7 @@ document.getElementById("chaticon2").onclick = function() {
 
   if (document.getElementById("mydiv").style.display == "block"){
     document.getElementById("mydiv").classList.add("cDi");
-    setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";    chatbar = true;},500)
+    setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";    chatbar = true;},450)
   }
   else{
 
@@ -1413,5 +1808,254 @@ document.getElementById("chaticon2").onclick = function() {
 
 function closechatbar(){
   document.getElementById("mydiv").classList.add("cDi");
-  setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";     chatbar = true;},500)
+  setTimeout(function(){document.getElementById("mydiv").classList.remove("cDi");document.getElementById("mydiv").style.display = "none";     chatbar = true;},450)
+}
+
+document.getElementById("leadicon").onclick = function() {
+
+  if (document.getElementById("mydiv2").style.display == "block"){
+    document.getElementById("mydiv2").classList.add("cDi");
+    setTimeout(function(){document.getElementById("mydiv2").classList.remove("cDi");document.getElementById("mydiv2").style.display = "none";    leadbar = true;},450)
+  }
+  else{
+
+
+    document.getElementById("mydiv2").style.display = "block";
+
+    document.getElementById("mydiv2").classList.add("myDi");
+    setTimeout(function(){document.getElementById("mydiv2").classList.remove("myDi");document.getElementById("mydiv2").style.opacity = 1; leadbar = false;},500)
+  }
+
+}
+function closeleadbar(){
+  document.getElementById("mydiv2").classList.add("cDi");
+  setTimeout(function(){document.getElementById("mydiv2").classList.remove("cDi");document.getElementById("mydiv2").style.display = "none";     leadbar = true;},450)
+}
+// function startSSE() {
+//   const source = new EventSource("sse.php");
+
+//   source.onmessage = function(event) {
+//       console.log("Update from server:", event.data);
+//       displaychat();  // Update the chat when the server sends an update
+//   };
+
+//   source.addEventListener('close', function(event) {
+//       console.log("Server closed the connection:", event.data);
+//       // Automatically reconnect after 1 second
+//       setTimeout(startSSE, 1000);
+//   });
+// }
+
+// // Start the SSE connection
+// startSSE();
+
+function displayratings(){
+  document.getElementById("ourtutors").innerHTML = ""
+  fetch('tutors.txt')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(data => {
+      textLines = data.split('\n');
+      for (let i = 2; i < textLines.length; i += 3){
+        const displaydiv = document.getElementById("ourtutors");
+         // Clear previous content
+        
+        const tutor = textLines[i-2];
+        const reviews = textLines[i-1];
+        const rating = textLines[i];
+        const tutordiv = document.createElement("div");
+        tutordiv.id = tutor
+        const img = document.createElement("img");
+        img.src = "bell.png"
+        img.width = "500"
+        img.height = "500"
+        img.id = "belliconimg"
+        img.alt = "chat icon"
+        const br = document.createElement("br")
+        const star1 = document.createElement("button")
+        star1.onclick = function() {
+          rate(1, tutor);
+        };
+
+        star1.innerHTML = "⭐"
+        star1.className = ".stars"
+        const star2 = document.createElement("button")
+        star2.onclick = function() {
+          rate(2, tutor);
+        };
+
+        star2.innerHTML = "⭐"
+        star2.className = ".stars"
+        const star3 = document.createElement("button")
+        star3.onclick = function() {
+          rate(3, tutor);
+        };
+
+
+        star3.innerHTML = "⭐"
+        star3.className = ".stars"
+        const star4 = document.createElement("button")
+        star4.onclick = function() {
+          rate(4, tutor);
+        };
+
+        star4.innerHTML = "⭐"
+        star4.className = ".stars"
+        const star5 = document.createElement("button")
+        star5.onclick = function() {
+          rate(5, tutor);
+        };
+        star5.innerHTML = "⭐"
+        star5.className = ".stars"
+        const ratingh2 = document.createElement("h2")
+        ratingh2.innerHTML = "Rating: " + (rating/reviews).toString().slice(0,4)+ " Stars"
+        const reviewh3 = document.createElement("h3")
+        reviewh3.innerHTML = reviews + " Total Reviews"
+        
+        //replace with tutors later
+        displaydiv.appendChild(tutordiv)
+        displaydiv.appendChild(br)
+        tutordiv.appendChild(img)
+        tutordiv.appendChild(star1)
+        tutordiv.appendChild(star2)
+        tutordiv.appendChild(star3)
+        tutordiv.appendChild(star4)
+        tutordiv.appendChild(star5)
+        displaydiv.appendChild(br)
+        tutordiv.appendChild(ratingh2)
+        displaydiv.appendChild(br)
+        tutordiv.appendChild(reviewh3)
+        // alert(localStorage.getItem(`${tutor}`))
+        // if(localStorage.getItem(`${tutor}`) == true) {
+        //   alert("hi")
+        //   stars = document.querySelectorAll(".star")
+        //   stars.forEach(star=>{
+        //     star.display = "none";
+        //   })
+        //     //document.getElementById(tutorId).innerHTML = "already rated"
+
+        // }
+        
+
+       
+      
+      }
+
+     })
+    .catch(error => {
+        console.error('There was a problem with fetching the text file:', error);
+    });
+}
+function rate(newrating, tutorId) {
+  // Fetch the tutor data from the text file
+  fetch('tutors.txt')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.text();
+    })
+    .then(data => {
+      const textLines = data.split('\n');
+
+      // Loop through the text lines to find the tutor by ID
+      for (let i = 2; i < textLines.length; i += 3) {
+        const tutor = textLines[i - 2];
+        if (tutor.trim() == tutorId.trim()) {
+          const reviews = textLines[i - 1];
+          const rating = textLines[i];
+
+          // Check if the tutor has already been rated by the user
+          if (localStorage.getItem(`${tutor}`)!="rated") {
+            
+            
+
+            // Mark the tutor as rated in localStorage
+            localStorage.setItem(`${tutor}`, "rated");
+
+            // Prepare the updated data to send
+            const data = {
+              tutor: tutor,
+              reviews: (parseInt(reviews) + 1).toString(),
+              rating: (parseInt(rating) + parseInt(newrating)).toString()
+            };
+
+            // Send the updated rating and reviews to the server
+            $.ajax({
+              type: "POST",
+              url: "tutors.php",
+              contentType: "application/json",
+              data: JSON.stringify(data),
+              success: function(response) {
+                console.log("Data sent successfully:", response);
+                displayratings()
+              },
+              error: function(error) {
+                console.error("Error sending data:", error);
+              }
+            });
+            
+          } else {
+            
+            // The tutor has already been rated
+            console.log("Tutor already rated:", localStorage.getItem(`${tutor}`));
+          }
+        }
+      }
+    })
+    .catch(error => {
+      console.error('There was a problem with fetching the text file:', error);
+    });
+  
+}
+displayratings()
+
+
+
+
+// Function to send an email using SendGrid API
+function sendEmail(recipient, subject, text) {
+  fetch('https://api.sendgrid.com/v3/mail/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      personalizations: [
+        {
+          to: [{ email: recipient }]
+        }
+      ],
+      from: { email: 'your-email@example.com' }, // Replace with your verified SendGrid sender email
+      subject: subject,
+      content: [
+        {
+          type: 'text/plain',
+          value: text
+        }
+      ]
+    })
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log(`Email sent successfully to ${recipient}`);
+    } else {
+      console.error(`Failed to send email to ${recipient}`);
+    }
+  })
+  .catch(error => {
+    console.error('Error sending email:', error);
+  });
+
+}
+function switchtoadmin(){
+  localStorage.setItem("curchat","admin")
+  document.getElementById("chatTitle").innerHTML = localStorage.getItem("curchat");
+  document.getElementById("chatbut2").style.display = "block";
+  displaychat()
 }

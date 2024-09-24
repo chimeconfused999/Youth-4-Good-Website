@@ -29,27 +29,32 @@ if (isset($input['username']) && isset($input['serviceminutes'])) {
         $leaderboard = file($leaderboardFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     }
 
-    // Update the leaderboard with the new user data
+    // Flag to check if the user exists in the leaderboard
     $updated = false;
-    foreach ($leaderboard as &$line) {
-        if (strpos($line, $name . ':') === 0) {
-            $line = $name . ':' . $serviceminutes; // Update existing entry
-            $updated = true;
+
+    // Update the leaderboard with the new user data
+    for ($i = 0; $i < count($leaderboard); $i++) {
+        // Check if the current line is the username
+        if (trim($leaderboard[$i]) === $name) {
+            // Replace the next line with the new score
+            $leaderboard[$i + 1] = $serviceminutes;
+            $updated = true; // Mark that the user was found and updated
             break;
         }
     }
 
     // If the username wasn't found, add a new entry
     if (!$updated) {
-        $leaderboard[] = $name . ':' . $serviceminutes;
+        $leaderboard[] = $name; // Add the username
+        $leaderboard[] = $serviceminutes; // Add the score
     }
 
     // Sort the leaderboard by service minutes in descending order
     usort($leaderboard, function($a, $b) {
-        return (int)explode(':', $b)[1] <=> (int)explode(': ', $a)[1];
+        return is_numeric($b) && is_numeric($a) ? (int)$b <=> (int)$a : 0;
     });
 
-    // Write the updated leaderboard back to the file without curly brackets
+    // Write the updated leaderboard back to the file using newline separators
     if (file_put_contents($leaderboardFile, implode(PHP_EOL, $leaderboard))) {
         echo json_encode(['status' => 'success', 'message' => 'Leaderboard updated successfully.']);
     } else {
